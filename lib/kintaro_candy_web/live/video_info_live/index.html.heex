@@ -1,3 +1,70 @@
 <.header>
-  Video infos
+  Kintaro Candy
 </.header>
+
+<form class="border">
+  <div>Select Video</div>
+  <input type="file" />
+  <input type="submit" value="Load video" />
+</form>
+
+<div class="border">
+  <div>Video</div>
+  <img />
+  <button>Next</button>
+</div>
+
+<form class="border">
+  <div>Edit Diff Area</div>
+  <div>
+    <div>NW</div>
+    <div>
+      <label for="area_nw_x">nw.x</label>
+      <input type="range" name="area_nw_x" min="0" max="1920" value="0" />
+    </div>
+    <div>
+      <label for="area_nw_y">nw.y</label>
+      <input type="range" name="area_nw_y" min="0" max="1080" value="0" />
+    </div>
+  </div>
+  <div>
+    <div>SE</div>
+    <div>
+      <label for="area_se_x">se.x</label>
+      <input type="range" name="area_se_x" min="0" max="1920" value="1920" />
+    </div>
+    <div>
+      <label for="area_se_y">se.y</label>
+      <input type="range" name="area_se_y" min="0" max="1080" value="1080" />
+    </div>
+  </div>
+
+  <input type="submit" value="Load all frames and calculate difference" />
+</form>
+
+<form class="border">
+  <div>Set Extract parameters</div>
+  <div>
+    <label for="stop_frames_length">stop_frames_length</label>
+    <input type="number" name="stop_frames_length" value="20" />
+  </div>
+  <div>
+    <label for="diff_threshold">diff_threshold</label>
+    <input type="number" name="diff_threshold" value="10" />
+  </div>
+
+  <input type="submit" value="Extract frames" />
+</form>
+
+<div class="border">
+  <div>Extracted images</div>
+  <img />
+  <button>Prev</button>
+  <button>Next</button>
+</div>
+
+<form class="border">
+  <div>Write images</div>
+  <input type="file" name="write_dest" webkitdirectory />
+  <input type="submit" value="Write" />
+</form>
