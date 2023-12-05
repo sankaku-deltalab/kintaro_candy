@@ -62,4 +62,5 @@ RUN su ${USERNAME} -c "mix local.hex --force \
 # RUN  mix ...
 
 # install livebook for dev
-RUN su ${USERNAME} -c "mix escript.install hex livebook"
+RUN su ${USERNAME} -c "mix escript.install --force hex livebook"
+ENV PATH $PATH:/home/vscode/.mix/escripts
