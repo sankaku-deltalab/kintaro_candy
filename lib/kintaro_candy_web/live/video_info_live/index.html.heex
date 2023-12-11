@@ -2,45 +2,94 @@
   Kintaro Candy
 </.header>
 
-<form class="border">
-  <div>Select Video</div>
-  <input type="file" />
-  <input type="submit" value="Load video" />
-</form>
+<.simple_form
+  :let={f}
+  for={@loading_form}
+  phx-change="update_loading_form"
+  phx-submit="request_loading_video"
+  class="border"
+>
+  <h2>Step 1. Select video file</h2>
+  <.input field={f[:video_path]} type="text" label="Video" />
+  <:actions>
+    <.button>Load video</.button>
+  </:actions>
+</.simple_form>
 
-<div class="border">
-  <div>Video</div>
-  <img />
-  <button>Next</button>
-</div>
+<div class="border"></div>
 
-<form class="border">
-  <div>Edit Diff Area</div>
-  <div>
-    <div>NW</div>
-    <div>
-      <label for="area_nw_x">nw.x</label>
-      <input type="range" name="area_nw_x" min="0" max="1920" value="0" />
-    </div>
-    <div>
-      <label for="area_nw_y">nw.y</label>
-      <input type="range" name="area_nw_y" min="0" max="1080" value="0" />
-    </div>
-  </div>
-  <div>
-    <div>SE</div>
-    <div>
-      <label for="area_se_x">se.x</label>
-      <input type="range" name="area_se_x" min="0" max="1920" value="1920" />
-    </div>
-    <div>
-      <label for="area_se_y">se.y</label>
-      <input type="range" name="area_se_y" min="0" max="1080" value="1080" />
-    </div>
-  </div>
+<%= cond do %>
+  <% not @video_async.ok? -> %>
+    <div></div>
+  <% true -> %>
+    <.simple_form
+      :let={f}
+      for={@diff_parameter_form}
+      phx-change="update_diff_form"
+      phx-submit="request_calculating_diff"
+      class="border"
+    >
+      <h2>Step 2. Set difference parameter</h2>
+      <div>
+        <div>Video</div>
+        <img src={@frame_uri_for_diff_params_async.result} class="w-full" />
+        <button>Next</button>
+      </div>
 
-  <input type="submit" value="Load all frames and calculate difference" />
-</form>
+      <.input
+        field={f[:area_nw_x]}
+        type="range"
+        min="0"
+        max={video_size_x(@video_async)}
+        label="nw.x"
+      />
+      <.input
+        field={f[:area_se_x]}
+        type="range"
+        min="0"
+        max={video_size_x(@video_async)}
+        label="se.x"
+      />
+      <.input
+        field={f[:area_nw_y]}
+        type="range"
+        min="0"
+        max={video_size_y(@video_async)}
+        label="nw.y"
+      />
+      <.input
+        field={f[:area_se_y]}
+        type="range"
+        min="0"
+        max={video_size_y(@video_async)}
+        label="se.y"
+      />
+
+      <:actions>
+        <.button>Calculate diff</.button>
+      </:actions>
+    </.simple_form>
+<% end %>
+
+<%= cond do %>
+  <% not @diff_async.ok? -> %>
+    <div></div>
+  <% true -> %>
+    <.simple_form
+      :let={f}
+      for={@extract_parameter_form}
+      phx-change="update_extract_parameter"
+      phx-submit="extract_frames"
+      class="border"
+    >
+      <h2>Step 3. Set Extract parameters</h2>
+      <.input field={f[:stop_frames_length]} type="number" min="0" label="stop_frames_length" />
+      <.input field={f[:diff_threshold]} type="number" min="0" label="diff_threshold" />
+      <:actions>
+        <.button>Extract frames</.button>
+      </:actions>
+    </.simple_form>
+<% end %>
 
 <form class="border">
   <div>Set Extract parameters</div>
