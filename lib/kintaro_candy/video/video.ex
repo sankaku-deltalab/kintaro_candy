@@ -141,8 +141,9 @@ defmodule Kin.Video do
       |> Nx.tensor()
       |> Nx.window_max({stop_frames_length})
       |> Nx.to_list()
-      |> Stream.filter(fn {_k, v} -> v < diff_threshold end)
-      |> Stream.map(fn {k, _v} -> k end)
+      |> Stream.with_index()
+      |> Stream.filter(fn {v, _k} -> v < diff_threshold end)
+      |> Stream.map(fn {_v, k} when is_integer(k) -> k end)
       |> Enum.to_list()
 
     stopped_keys_set =
@@ -162,6 +163,7 @@ defmodule Kin.Video do
       try do
         keys
         |> Enum.sort()
+        |> IO.inspect()
         |> Enum.map(&load_frame_from_capture!(cap, &1))
         |> then(fn frames -> {:ok, frames} end)
       catch

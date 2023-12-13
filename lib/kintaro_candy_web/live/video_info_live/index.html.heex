@@ -1,5 +1,5 @@
 <.header>
-  Kintaro Candy
+  Kintaro Slicer
 </.header>
 
 <.simple_form
@@ -78,8 +78,8 @@
     <.simple_form
       :let={f}
       for={@extract_parameter_form}
-      phx-change="update_extract_parameter"
-      phx-submit="extract_frames"
+      phx-change="update_extract_form"
+      phx-submit="request_extracting_frames"
       class="border"
     >
       <h2>Step 3. Set Extract parameters</h2>
@@ -91,29 +91,20 @@
     </.simple_form>
 <% end %>
 
-<form class="border">
-  <div>Set Extract parameters</div>
-  <div>
-    <label for="stop_frames_length">stop_frames_length</label>
-    <input type="number" name="stop_frames_length" value="20" />
-  </div>
-  <div>
-    <label for="diff_threshold">diff_threshold</label>
-    <input type="number" name="diff_threshold" value="10" />
-  </div>
-
-  <input type="submit" value="Extract frames" />
-</form>
-
-<div class="border">
-  <div>Extracted images</div>
-  <img />
-  <button>Prev</button>
-  <button>Next</button>
-</div>
-
-<form class="border">
-  <div>Write images</div>
-  <input type="file" name="write_dest" webkitdirectory />
-  <input type="submit" value="Write" />
-</form>
+<%= cond do %>
+  <% not @extracted_frames_async.ok? -> %>
+    <div></div>
+  <% true -> %>
+    <.simple_form
+      :let={f}
+      for={@extract_parameter_form}
+      phx-submit="request_save_frames"
+      class="border"
+    >
+      <h2>Step 4. Save frames</h2>
+      <.input field={f[:output_directory_path]} type="text" label="Save directory" />
+      <:actions>
+        <.button>Save</.button>
+      </:actions>
+    </.simple_form>
+<% end %>

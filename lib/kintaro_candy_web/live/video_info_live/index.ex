@@ -96,23 +96,29 @@ defmodule KinWeb.VideoInfoLive.Index do
 
   @impl true
   def handle_event("request_calculating_diff", params, %Socket{} = socket) do
-    if not socket.assigns.video_async.ok? do
-      socket = socket |> put_flash(:error, "Video is not loaded")
-      {:noreply, socket}
-    else
-      diff_parameter = params |> to_form() |> diff_form_to_parameter()
+    cond do
+      not socket.assigns.video_async.ok? ->
+        socket = socket |> put_flash(:error, "Video is not loaded")
+        {:noreply, socket}
 
-      socket =
-        socket
-        |> set_async_as_loading(:diff_async)
-        |> start_async(:diff_was_calculated, fn ->
-          {:ok, diff} =
-            Kin.Video.calculate_diff(socket.assigns.video_async.result, diff_parameter)
+      socket.assigns.diff_async.loading != nil ->
+        socket = socket |> put_flash(:error, "Diff is calculating")
+        {:noreply, socket}
 
-          {diff_parameter, diff}
-        end)
+      true ->
+        diff_parameter = params |> to_form() |> diff_form_to_parameter()
 
-      {:noreply, socket}
+        socket =
+          socket
+          |> set_async_as_loading(:diff_async)
+          |> start_async(:diff_was_calculated, fn ->
+            {:ok, diff} =
+              Kin.Video.calculate_diff(socket.assigns.video_async.result, diff_parameter)
+
+            {diff_parameter, diff}
+          end)
+
+        {:noreply, socket}
     end
   end
 
@@ -184,10 +190,11 @@ defmodule KinWeb.VideoInfoLive.Index do
 
   # Diff calculation
 
-  def handle_async(:diff_was_calculated, {:ok, diff}, socket) do
+  def handle_async(:diff_was_calculated, {:ok, {_diff_parameter, diff}}, socket) do
     socket =
       socket
       |> set_async_as_ok(:diff_async, diff)
+      |> put_flash(:info, "Diff was calculated")
 
     {:noreply, socket}
   end
