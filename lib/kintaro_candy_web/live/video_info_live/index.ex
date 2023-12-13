@@ -161,6 +161,36 @@ defmodule KinWeb.VideoInfoLive.Index do
     end
   end
 
+  # Output
+
+  @impl true
+  def handle_event("update_output_form", params, %Socket{} = socket) do
+    socket = socket |> assign(:output_path_form, to_form(params))
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("request_output_frames", params, %Socket{} = socket) do
+    video_async = socket.assigns.video_async
+    extracted_frames_async = socket.assigns.extracted_frames_async
+
+    with %AsyncResult{ok?: true, result: %Kin.Video{} = _video} <- video_async,
+         %AsyncResult{ok?: true, result: target_frames} <- extracted_frames_async do
+      output_directory_path = params["output_directory_path"]
+
+      socket =
+        socket
+        |> start_async(:frames_are_outputted, fn ->
+          Kin.Video.write_frames(target_frames, output_directory_path)
+        end)
+
+      {:noreply, socket}
+    else
+      _ -> {:noreply, socket}
+    end
+  end
+
   # Video loading
 
   def handle_async(
@@ -268,6 +298,24 @@ defmodule KinWeb.VideoInfoLive.Index do
       socket
       |> assign(:extracted_frames_async, AsyncResult.failed(old_frames, {:error, reason}))
       |> put_flash(:error, "Failed to Extract frames")
+
+    {:noreply, socket}
+  end
+
+  # Output
+
+  def handle_async(:frames_are_outputted, {:ok, _frames}, socket) do
+    socket =
+      socket
+      |> put_flash(:info, "Succeed to save!")
+
+    {:noreply, socket}
+  end
+
+  def handle_async(:frames_are_outputted, {:exit, _reason}, socket) do
+    socket =
+      socket
+      |> put_flash(:info, "Failed to save!")
 
     {:noreply, socket}
   end

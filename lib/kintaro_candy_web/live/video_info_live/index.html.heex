@@ -98,7 +98,8 @@
     <.simple_form
       :let={f}
       for={@extract_parameter_form}
-      phx-submit="request_save_frames"
+      phx-change="update_output_form"
+      phx-submit="request_output_frames"
       class="border"
     >
       <h2>Step 4. Save frames</h2>

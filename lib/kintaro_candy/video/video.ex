@@ -176,7 +176,7 @@ defmodule Kin.Video do
     end
   end
 
-  defp load_frame_from_capture!(%VideoCapture{} = cap, key) when is_integer(key) do
+  defp load_frame_from_capture(%VideoCapture{} = cap, key) when is_integer(key) do
     maybe_frame =
       cap
       |> tap(&VideoCapture.set(&1, Evision.Constant.cv_CAP_PROP_POS_FRAMES(), key))
@@ -188,6 +188,11 @@ defmodule Kin.Video do
     end
   end
 
+  defp load_frame_from_capture!(%VideoCapture{} = cap, key) when is_integer(key) do
+    {:ok, frame} = load_frame_from_capture(cap, key)
+    frame
+  end
+
   @spec write_frames([%Mat{}], Path.t()) :: any()
   def write_frames(frames, dest_dir) do
     File.mkdir_p!(dest_dir)
@@ -195,7 +200,7 @@ defmodule Kin.Video do
     frames
     |> Enum.with_index()
     |> Enum.map(fn
-      {frame, i} ->
+      {%Mat{} = frame, i} ->
         dest = Path.join(dest_dir, "#{i}.png")
         Evision.imwrite(dest, frame)
     end)
