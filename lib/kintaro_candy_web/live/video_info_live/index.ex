@@ -53,8 +53,8 @@ defmodule KinWeb.VideoInfoLive.Index do
   def handle_event("request_loading_video", %{"video_path" => video_path}, %Socket{} = socket) do
     socket =
       socket
-      |> set_async_as_loading(:video_async)
-      |> set_async_as_loading(:frame_uri_for_diff_params_async)
+      |> set_async_as_loading!(:video_async)
+      |> set_async_as_loading!(:frame_uri_for_diff_params_async)
       |> start_async(:video_was_loaded, fn ->
         {:ok, video} = Kin.Video.load_video(video_path)
         diff_parameter = %{nw: {0, 0}, se: video.frame_size}
@@ -80,7 +80,7 @@ defmodule KinWeb.VideoInfoLive.Index do
            %AsyncResult{loading: loading} when loading == nil <-
              frame_uri_for_diff_params_async do
         socket
-        |> set_async_as_loading(:frame_uri_for_diff_params_async)
+        |> set_async_as_loading!(:frame_uri_for_diff_params_async)
         |> start_async(:frame_for_diff_is_loaded, fn ->
           diff_parameter = params |> to_form() |> diff_form_to_parameter()
           {:ok, frame} = Kin.Video.get_example_frame_drawn_area(video, 0, diff_parameter)
@@ -110,7 +110,7 @@ defmodule KinWeb.VideoInfoLive.Index do
 
         socket =
           socket
-          |> set_async_as_loading(:diff_async)
+          |> set_async_as_loading!(:diff_async)
           |> start_async(:diff_was_calculated, fn ->
             {:ok, diff} =
               Kin.Video.calculate_diff(socket.assigns.video_async.result, diff_parameter)
@@ -145,7 +145,7 @@ defmodule KinWeb.VideoInfoLive.Index do
 
       socket =
         socket
-        |> set_async_as_loading(:extracted_frames_async)
+        |> set_async_as_loading!(:extracted_frames_async)
         |> start_async(:frames_are_extracted, fn ->
           {:ok, frames} =
             diff
@@ -202,8 +202,8 @@ defmodule KinWeb.VideoInfoLive.Index do
 
     socket =
       socket
-      |> set_async_as_ok(:video_async, video)
-      |> set_async_as_ok(:frame_uri_for_diff_params_async, frame_uri)
+      |> set_async_as_ok!(:video_async, video)
+      |> set_async_as_ok!(:frame_uri_for_diff_params_async, frame_uri)
       |> assign(:diff_parameter_form, diff_parameter_to_form(%{nw: {0, 0}, se: video.frame_size}))
 
     {:noreply, socket}
@@ -212,7 +212,7 @@ defmodule KinWeb.VideoInfoLive.Index do
   def handle_async(:video_was_loaded, {:exit, reason}, %Socket{} = socket) do
     socket =
       socket
-      |> set_async_as_failed(:video_async, {:error, reason})
+      |> set_async_as_failed!(:video_async, {:error, reason})
       |> put_flash(:error, "Failed to load video")
 
     {:noreply, socket}
@@ -223,7 +223,7 @@ defmodule KinWeb.VideoInfoLive.Index do
   def handle_async(:diff_was_calculated, {:ok, {_diff_parameter, diff}}, socket) do
     socket =
       socket
-      |> set_async_as_ok(:diff_async, diff)
+      |> set_async_as_ok!(:diff_async, diff)
       |> put_flash(:info, "Diff was calculated")
 
     {:noreply, socket}
@@ -232,7 +232,7 @@ defmodule KinWeb.VideoInfoLive.Index do
   def handle_async(:diff_was_calculated, {:exit, reason}, socket) do
     socket =
       socket
-      |> set_async_as_failed(:diff_async, {:error, reason})
+      |> set_async_as_failed!(:diff_async, {:error, reason})
       |> put_flash(:error, "Failed to calculate diff")
 
     {:noreply, socket}
@@ -251,14 +251,14 @@ defmodule KinWeb.VideoInfoLive.Index do
 
     socket =
       socket
-      |> set_async_as_ok(:frame_uri_for_diff_params_async, frame_uri)
+      |> set_async_as_ok!(:frame_uri_for_diff_params_async, frame_uri)
 
     if diff_params == current_diff_parameter do
       socket
     else
       # reload frame for diff if diff parameter is changed
       socket
-      |> set_async_as_loading(:frame_uri_for_diff_params_async)
+      |> set_async_as_loading!(:frame_uri_for_diff_params_async)
       |> start_async(:frame_uri_for_diff_params_async, fn ->
         {:ok, diff} =
           Kin.Video.calculate_diff(socket.assigns.video_async.result, current_diff_parameter)
@@ -273,7 +273,7 @@ defmodule KinWeb.VideoInfoLive.Index do
   def handle_async(:frame_for_diff_is_loaded, {:exit, reason}, %Socket{} = socket) do
     socket =
       socket
-      |> set_async_as_failed(:video_async, {:error, reason})
+      |> set_async_as_failed!(:video_async, {:error, reason})
       |> put_flash(:error, "Failed to load video")
 
     {:noreply, socket}
@@ -284,7 +284,7 @@ defmodule KinWeb.VideoInfoLive.Index do
   def handle_async(:frames_are_extracted, {:ok, frames}, socket) do
     socket =
       socket
-      |> set_async_as_ok(:extracted_frames_async, frames)
+      |> set_async_as_ok!(:extracted_frames_async, frames)
 
     {:noreply, socket}
   end
@@ -292,7 +292,7 @@ defmodule KinWeb.VideoInfoLive.Index do
   def handle_async(:frames_are_extracted, {:exit, reason}, socket) do
     socket =
       socket
-      |> set_async_as_failed(:extracted_frames_async, {:error, reason})
+      |> set_async_as_failed!(:extracted_frames_async, {:error, reason})
       |> put_flash(:error, "Failed to Extract frames")
 
     {:noreply, socket}
@@ -348,17 +348,17 @@ defmodule KinWeb.VideoInfoLive.Index do
     end
   end
 
-  defp set_async_as_loading(%Socket{} = socket, key) do
+  defp set_async_as_loading!(%Socket{} = socket, key) do
     socket
     |> assign(key, AsyncResult.loading(Map.fetch!(socket.assigns, key)))
   end
 
-  defp set_async_as_ok(%Socket{} = socket, key, result) do
+  defp set_async_as_ok!(%Socket{} = socket, key, result) do
     socket
     |> assign(key, AsyncResult.ok(Map.fetch!(socket.assigns, key), result))
   end
 
-  defp set_async_as_failed(%Socket{} = socket, key, reason) do
+  defp set_async_as_failed!(%Socket{} = socket, key, reason) do
     socket
     |> assign(key, AsyncResult.failed(Map.fetch!(socket.assigns, key), reason))
   end
