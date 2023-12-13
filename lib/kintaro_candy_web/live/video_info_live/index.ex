@@ -282,21 +282,17 @@ defmodule KinWeb.VideoInfoLive.Index do
   # Frame extraction
 
   def handle_async(:frames_are_extracted, {:ok, frames}, socket) do
-    old_frames = socket.assigns.extracted_frames_async
-
     socket =
       socket
-      |> assign(:extracted_frames_async, AsyncResult.ok(old_frames, frames))
+      |> set_async_as_ok(:extracted_frames_async, frames)
 
     {:noreply, socket}
   end
 
   def handle_async(:frames_are_extracted, {:exit, reason}, socket) do
-    old_frames = socket.assigns.extracted_frames_async
-
     socket =
       socket
-      |> assign(:extracted_frames_async, AsyncResult.failed(old_frames, {:error, reason}))
+      |> set_async_as_failed(:extracted_frames_async, {:error, reason})
       |> put_flash(:error, "Failed to Extract frames")
 
     {:noreply, socket}
