@@ -40,6 +40,7 @@
 
       <.input
         field={f[:area_nw_x]}
+        phx-throttle="100"
         type="range"
         min="0"
         max={video_size_x(@video_async)}
@@ -47,6 +48,7 @@
       />
       <.input
         field={f[:area_se_x]}
+        phx-throttle="100"
         type="range"
         min="0"
         max={video_size_x(@video_async)}
@@ -54,6 +56,7 @@
       />
       <.input
         field={f[:area_nw_y]}
+        phx-throttle="100"
         type="range"
         min="0"
         max={video_size_y(@video_async)}
@@ -61,6 +64,7 @@
       />
       <.input
         field={f[:area_se_y]}
+        phx-throttle="100"
         type="range"
         min="0"
         max={video_size_y(@video_async)}
