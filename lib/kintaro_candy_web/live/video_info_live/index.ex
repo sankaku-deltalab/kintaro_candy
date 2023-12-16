@@ -55,6 +55,7 @@ defmodule KinWeb.VideoInfoLive.Index do
       socket
       |> set_async_as_loading!(:video_async)
       |> set_async_as_loading!(:frame_uri_for_diff_params_async)
+      |> put_flash(:info, "Loading video...")
       |> start_async(:video_was_loaded, fn ->
         {:ok, video} = Kin.Video.load_video(video_path)
         diff_parameter = %{nw: {0, 0}, se: video.frame_size}
@@ -111,6 +112,7 @@ defmodule KinWeb.VideoInfoLive.Index do
         socket =
           socket
           |> set_async_as_loading!(:diff_async)
+          |> put_flash(:info, "Calculating diff...")
           |> start_async(:diff_was_calculated, fn ->
             {:ok, diff} =
               Kin.Video.calculate_diff(socket.assigns.video_async.result, diff_parameter)
@@ -205,6 +207,9 @@ defmodule KinWeb.VideoInfoLive.Index do
       |> set_async_as_ok!(:video_async, video)
       |> set_async_as_ok!(:frame_uri_for_diff_params_async, frame_uri)
       |> assign(:diff_parameter_form, diff_parameter_to_form(%{nw: {0, 0}, se: video.frame_size}))
+      |> put_flash(:info, "Video was loaded")
+
+    Process.send_after(self(), {:delayed_push_patch, "/#calculating_diff"}, 0)
 
     {:noreply, socket}
   end
@@ -225,6 +230,8 @@ defmodule KinWeb.VideoInfoLive.Index do
       socket
       |> set_async_as_ok!(:diff_async, diff)
       |> put_flash(:info, "Diff was calculated")
+
+    Process.send_after(self(), {:delayed_push_patch, "/#extracting_frames"}, 0)
 
     {:noreply, socket}
   end
@@ -285,6 +292,9 @@ defmodule KinWeb.VideoInfoLive.Index do
     socket =
       socket
       |> set_async_as_ok!(:extracted_frames_async, frames)
+      |> put_flash(:info, "Frames are extracted")
+
+    Process.send_after(self(), {:delayed_push_patch, "/#output_frames"}, 0)
 
     {:noreply, socket}
   end
@@ -314,6 +324,11 @@ defmodule KinWeb.VideoInfoLive.Index do
       |> put_flash(:info, "Failed to save!")
 
     {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:delayed_push_patch, path}, socket) do
+    {:noreply, push_patch(socket, to: path)}
   end
 
   defp diff_parameter_to_form(%{nw: {nw_x, nw_y}, se: {se_x, se_y}} = _diff_parameter) do

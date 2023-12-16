@@ -4,10 +4,11 @@
 
 <.simple_form
   :let={f}
+  id="loading_video"
   for={@loading_form}
   phx-change="update_loading_form"
   phx-submit="request_loading_video"
-  class="border"
+  class="border h-full"
 >
   <h2>Step 1. Select video file</h2>
   <.input field={f[:video_path]} type="text" label="Video" />
@@ -24,10 +25,11 @@
   <% true -> %>
     <.simple_form
       :let={f}
+      id="calculating_diff"
       for={@diff_parameter_form}
       phx-change="update_diff_form"
       phx-submit="request_calculating_diff"
-      class="border"
+      class="border h-full"
     >
       <h2>Step 2. Set difference parameter</h2>
       <div>
@@ -77,10 +79,11 @@
   <% true -> %>
     <.simple_form
       :let={f}
+      id="extracting_frames"
       for={@extract_parameter_form}
       phx-change="update_extract_form"
       phx-submit="request_extracting_frames"
-      class="border"
+      class="border h-full"
     >
       <h2>Step 3. Set Extract parameters</h2>
       <.input field={f[:stop_frames_length]} type="number" min="0" label="stop_frames_length" />
@@ -97,10 +100,11 @@
   <% true -> %>
     <.simple_form
       :let={f}
+      id="output_frames"
       for={@extract_parameter_form}
       phx-change="update_output_form"
       phx-submit="request_output_frames"
-      class="border"
+      class="border h-full"
     >
       <h2>Step 4. Save frames</h2>
       <.input field={f[:output_directory_path]} type="text" label="Save directory" />
