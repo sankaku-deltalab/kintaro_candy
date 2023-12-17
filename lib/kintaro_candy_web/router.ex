@@ -17,7 +17,7 @@ defmodule KinWeb.Router do
   scope "/", KinWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", VideoInfoLive.Index, :index
   end
 
   # Other scopes may use custom stacks.

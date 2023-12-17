@@ -1,0 +1,119 @@
+<.header>
+  Kintaro Slicer
+</.header>
+
+<.simple_form
+  :let={f}
+  id="loading_video"
+  for={@loading_form}
+  phx-change="update_loading_form"
+  phx-submit="request_loading_video"
+  class="border h-full"
+>
+  <h2>Step 1. Select video file</h2>
+  <.input field={f[:video_path]} type="text" label="Video" />
+  <:actions>
+    <.button>Load video</.button>
+  </:actions>
+</.simple_form>
+
+<div class="border"></div>
+
+<%= cond do %>
+  <% not @video_async.ok? -> %>
+    <div></div>
+  <% true -> %>
+    <.simple_form
+      :let={f}
+      id="calculating_diff"
+      for={@diff_parameter_form}
+      phx-change="update_diff_form"
+      phx-submit="request_calculating_diff"
+      class="border h-full"
+    >
+      <h2>Step 2. Set difference parameter</h2>
+      <div>
+        <div>Video</div>
+        <img src={@frame_uri_for_diff_params_async.result} class="w-full" />
+        <button>Next</button>
+      </div>
+
+      <.input
+        field={f[:area_nw_x]}
+        phx-throttle="100"
+        type="range"
+        min="0"
+        max={video_size_x(@video_async)}
+        label="nw.x"
+      />
+      <.input
+        field={f[:area_se_x]}
+        phx-throttle="100"
+        type="range"
+        min="0"
+        max={video_size_x(@video_async)}
+        label="se.x"
+      />
+      <.input
+        field={f[:area_nw_y]}
+        phx-throttle="100"
+        type="range"
+        min="0"
+        max={video_size_y(@video_async)}
+        label="nw.y"
+      />
+      <.input
+        field={f[:area_se_y]}
+        phx-throttle="100"
+        type="range"
+        min="0"
+        max={video_size_y(@video_async)}
+        label="se.y"
+      />
+
+      <:actions>
+        <.button>Calculate diff</.button>
+      </:actions>
+    </.simple_form>
+<% end %>
+
+<%= cond do %>
+  <% not @diff_async.ok? -> %>
+    <div></div>
+  <% true -> %>
+    <.simple_form
+      :let={f}
+      id="extracting_frames"
+      for={@extract_parameter_form}
+      phx-change="update_extract_form"
+      phx-submit="request_extracting_frames"
+      class="border h-full"
+    >
+      <h2>Step 3. Set Extract parameters</h2>
+      <.input field={f[:stop_frames_length]} type="number" min="0" label="stop_frames_length" />
+      <.input field={f[:diff_threshold]} type="number" min="0" label="diff_threshold" />
+      <:actions>
+        <.button>Extract frames</.button>
+      </:actions>
+    </.simple_form>
+<% end %>
+
+<%= cond do %>
+  <% not @extracted_frames_async.ok? -> %>
+    <div></div>
+  <% true -> %>
+    <.simple_form
+      :let={f}
+      id="output_frames"
+      for={@extract_parameter_form}
+      phx-change="update_output_form"
+      phx-submit="request_output_frames"
+      class="border h-full"
+    >
+      <h2>Step 4. Save frames</h2>
+      <.input field={f[:output_directory_path]} type="text" label="Save directory" />
+      <:actions>
+        <.button>Save</.button>
+      </:actions>
+    </.simple_form>
+<% end %>
