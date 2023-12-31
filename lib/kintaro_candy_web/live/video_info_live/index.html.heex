@@ -2,7 +2,13 @@
   Kintaro Slicer
 </.header>
 
-<.simple_form
+<.live_component
+  module={VideoLoadComponent}
+  id="video_loading"
+  __rephex__={Rephex.State.propagate(@__rephex__)}
+/>
+
+<%!-- <.simple_form
   :let={f}
   id="loading_video"
   for={@loading_form}
@@ -15,7 +21,7 @@
   <:actions>
     <.button>Load video</.button>
   </:actions>
-</.simple_form>
+</.simple_form> --%>
 
 <div class="border"></div>
 

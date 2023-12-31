@@ -1,12 +1,31 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.241.1/containers/elixir-phoenix-postgres
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/javascript-node-postgres
 {
-  "name": "kintaro_candy",
-  "dockerComposeFile": "docker-compose.yml",
-  "service": "elixir",
-  "workspaceFolder": "/workspace",
+	"name": "kintaro_candy",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "app",
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 
-  // Configure tool-specific properties.
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	"features": {
+		"ghcr.io/devcontainers-contrib/features/elixir-asdf:2": {}
+	},
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// This can be used to network with other containers or with the host.
+	// "forwardPorts": [3000, 5432],
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	"postCreateCommand": "mix local.hex --force && mix archive.install --force hex phx_new && mix escript.install --force hex livebook && mix archive.install --force hex phx_new",
+
+	// "postCreateCommand": [
+  //   "mix local.hex --force",
+  //   "&& mix archive.install --force hex phx_new",
+  //   "&& mix escript.install --force hex livebook",
+  //   "&& mix archive.install --force hex phx_new"
+  // ],
+
+	// Configure tool-specific properties.
   "customizations": {
     // Configure properties specific to VS Code.
     "vscode": {
@@ -29,15 +48,8 @@
         "GitHub.copilot-chat"
       ]
     }
-  },
+  }
 
-  // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  // This can be used to network with other containers or with the host.
-  "forwardPorts": [],
-
-  // Use 'postCreateCommand' to run commands after the container is created.
-  // "postCreateCommand": "mix deps.get"
-
-  // Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
-  "remoteUser": "vscode"
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
 }

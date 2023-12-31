@@ -1,8 +1,10 @@
 defmodule KinWeb.VideoInfoLive.Index do
   use KinWeb, :live_view
+  use Rephex.RootComponent, state: KinWeb.State
 
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.LiveView.Socket
+  alias KinWeb.VideoInfoLive.VideoLoadComponent
 
   @initial_state %{
     # video loading
@@ -30,6 +32,7 @@ defmodule KinWeb.VideoInfoLive.Index do
     socket =
       socket
       |> assign(@initial_state)
+      |> KinWeb.State.init()
 
     {:ok, socket}
   end
