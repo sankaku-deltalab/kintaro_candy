@@ -1,6 +1,4 @@
 defmodule KinWeb.State.Slice.VideoSlice do
-  @behaviour Rephex.Slice
-
   alias Phoenix.LiveView
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.LiveView.Socket
@@ -25,57 +23,25 @@ defmodule KinWeb.State.Slice.VideoSlice do
             async(%{params: Video.extract_parameter(), frames: %{non_neg_integer() => Mat.t()}})
         }
 
-  defmodule Support do
-    use Rephex.Slice.Support, name: :video
+  alias KinWeb.State.Slice.VideoSlice.{LoadVideoAsync, RedrawFrameForDiffAsync}
 
-    @spec async_status(%AsyncResult{}) :: :failed | :loading | :ok | :not_loaded
-    def async_status(%AsyncResult{} = async) do
-      case async do
-        %AsyncResult{loading: true} -> :loading
-        %AsyncResult{failed: f} when f != nil -> :failed
-        %AsyncResult{ok?: true} -> :ok
-        _ -> :not_loaded
-      end
-    end
-  end
-
-  alias KinWeb.State.Slice.Video.{LoadVideoAsync, RedrawFrameForDiffAsync}
-
-  @impl true
-  def slice_info(),
-    do: %{
-      name: :video,
-      initial_state: @initial_state,
-      async_modules: [LoadVideoAsync, RedrawFrameForDiffAsync]
-    }
+  use Rephex.Slice,
+    async_modules: [LoadVideoAsync, RedrawFrameForDiffAsync],
+    initial_state: @initial_state
 
   # Action
 
-  # Async action
-
-  @spec start_loading_video(Socket.t(), map()) :: Socket.t()
-  def start_loading_video(%Socket{} = socket, payload) do
-    Support.start_async(socket, LoadVideoAsync, payload)
-  end
-
-  @spec cancel_loading_video(Socket.t(), any()) :: Socket.t()
-  def cancel_loading_video(%Socket{} = socket, _payload) do
-    Support.cancel_async(socket, LoadVideoAsync)
-  end
-
   # Selector
 
-  def video_loading_status(%Socket{} = socket) do
+  def loading_video?(%Socket{} = socket) do
     socket
     |> Support.get_slice()
     |> Map.fetch!(:video_async)
-    |> Support.async_status()
+    |> then(fn %AsyncResult{loading: loading} -> loading != nil end)
   end
 end
 
-defmodule KinWeb.State.Slice.Video.LoadVideoAsync do
-  @behaviour Rephex.AsyncAction
-
+defmodule KinWeb.State.Slice.VideoSlice.LoadVideoAsync do
   alias Phoenix.LiveView.Socket
   alias Phoenix.LiveView
 
@@ -83,10 +49,12 @@ defmodule KinWeb.State.Slice.Video.LoadVideoAsync do
   alias KinWeb.State.Slice.VideoSlice.Support
 
   @type payload :: %{video_path: String.t()}
+  @type message :: any()
+  use Rephex.AsyncAction, slice: KinWeb.State.Slice.VideoSlice
 
   def before_async(%Socket{} = socket, %{video_path: video_path} = _payload) do
     cond do
-      VideoSlice.video_loading_status(socket) == :loading ->
+      VideoSlice.loading_video?(socket) ->
         {:abort, LiveView.put_flash(socket, :error, "Video is loading now")}
 
       not File.exists?(video_path) ->
@@ -134,23 +102,27 @@ defmodule KinWeb.State.Slice.Video.LoadVideoAsync do
   def receive_message(%Socket{} = socket, _content) do
     socket
   end
+
+  def canceled(%Socket{} = socket, _reason) do
+    socket
+  end
 end
 
 defmodule KinWeb.State.Slice.VideoSlice.RedrawFrameForDiffAsync do
-  @behaviour Rephex.AsyncAction
-
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.LiveView.Socket
-  alias Phoenix.LiveView
 
   alias KinWeb.State.Slice.VideoSlice.Support
 
   @type diff_parameter :: Kin.Video.diff_parameter()
 
   @type payload :: %{diff_parameter: diff_parameter(), frame_key: non_neg_integer()}
+  @type message :: any()
+
+  use Rephex.AsyncAction, slice: KinWeb.State.Slice.VideoSlice
 
   def before_async(%Socket{} = socket, _payload) do
-    {:continue, socket}
+    {:continue, socket |> Support.update_async!(:frame_uri_for_diff_async, loading: true)}
   end
 
   def start_async(
@@ -158,6 +130,8 @@ defmodule KinWeb.State.Slice.VideoSlice.RedrawFrameForDiffAsync do
         %{diff_parameter: params, frame_key: key} = _payload,
         _send_msg
       ) do
+    if not video_async.ok?, do: raise("Video not loaded")
+
     {:ok, diff_frame} =
       Kin.Video.get_example_frame_drawn_area(video_async.result, key, params)
 
@@ -166,21 +140,21 @@ defmodule KinWeb.State.Slice.VideoSlice.RedrawFrameForDiffAsync do
 
   def resolve(%Socket{} = socket, result) do
     case result do
-      {:ok, {%Kin.Video{} = video, diff_frame_uri}} ->
+      {:ok, diff_frame_uri} ->
         socket
-        |> Support.update_async!(:video_async, ok: video)
         |> Support.update_async!(:frame_uri_for_diff_async, ok: diff_frame_uri)
-        |> LiveView.put_flash(:info, "Video loading succeed")
 
       {:exit, reason} ->
         socket
-        |> Support.update_async!(:video_async, failed: reason)
         |> Support.update_async!(:frame_uri_for_diff_async, failed: reason)
-        |> LiveView.put_flash(:error, "Video loading failed")
     end
   end
 
   def receive_message(%Socket{} = socket, _content) do
+    socket
+  end
+
+  def canceled(%Socket{} = socket, _reason) do
     socket
   end
 end

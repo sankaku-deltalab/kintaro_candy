@@ -2,6 +2,8 @@ defmodule KinWeb.VideoInfoLive.VideoLoadComponent do
   use KinWeb, :live_component
   import Rephex.Component
 
+  alias KinWeb.State.Slice.VideoSlice
+
   @initial_state %{
     loading_form: to_form(%{"video_path" => ""})
   }
@@ -10,11 +12,11 @@ defmodule KinWeb.VideoInfoLive.VideoLoadComponent do
   def render(assigns) do
     ~H"""
     <div>
-      <.slice_component :let={_slice} root={@__rephex__} name={:video}>
+      <.slice_component :let={_slice} root={@__rephex__} slice={VideoSlice}>
         <.simple_form
           :let={f}
           for={@loading_form}
-          phx-submit="request_loading_video"
+          phx-submit="start_loading_video"
           class="border h-full"
         >
           <h2>Step 1. Select video file</h2>
@@ -32,7 +34,7 @@ defmodule KinWeb.VideoInfoLive.VideoLoadComponent do
   def update(%{__rephex__: _} = assigns, socket) do
     {:ok,
      socket
-     |> assign(assigns)
+     |> propagate_rephex(assigns)
      |> assign(@initial_state)}
   end
 

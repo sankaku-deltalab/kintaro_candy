@@ -13,15 +13,24 @@ defmodule Kin.Video do
   @spec load_video(Path.t()) :: {:ok, %__MODULE__{}} | {:error, any()}
   def load_video(filepath) do
     with %VideoCapture{} = cap <- VideoCapture.videoCapture(filepath),
-         frame_size <- {cap.frame_width, cap.frame_height},
-         %Mat{} = frame_0 <- VideoCapture.read(cap),
-         %Mat{} = frame_1 <- VideoCapture.read(cap) do
+         frame_size <- {cap.frame_width, cap.frame_height} do
+      fetch_num = 10
+      IO.inspect(cap)
+      frame_interval = div(floor(cap.frame_count), fetch_num)
+
+      example_frames =
+        0..(fetch_num - 1)
+        |> Enum.map(&(frame_interval * &1))
+        |> Enum.uniq()
+        |> Enum.map(fn k -> {k, load_frame_from_capture!(cap, k)} end)
+        |> Enum.filter(fn {_k, maybe_map} -> is_struct(maybe_map, Mat) end)
+        |> Enum.into(%{})
+
       {:ok,
        %__MODULE__{
          filepath: filepath,
          frame_size: frame_size,
-         # TODO: fetch more frames
-         example_frames: %{0 => frame_0, 1 => frame_1}
+         example_frames: example_frames
        }}
     else
       {:error, message} -> {:error, message}

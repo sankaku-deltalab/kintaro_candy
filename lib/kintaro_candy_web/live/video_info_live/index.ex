@@ -1,17 +1,19 @@
 defmodule KinWeb.VideoInfoLive.Index do
   use KinWeb, :live_view
   use Rephex.RootComponent, state: KinWeb.State
+  import Rephex.Component
 
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.LiveView.Socket
-  alias KinWeb.VideoInfoLive.VideoLoadComponent
+  alias KinWeb.State.Slice.VideoSlice
+  alias KinWeb.VideoInfoLive.{VideoLoadComponent, DiffCalcComponent}
 
   @initial_state %{
     # video loading
     loading_form: to_form(%{"video_path" => ""}),
     video_async: %AsyncResult{},
     # diff calculation
-    frame_uri_for_diff_params_async: %AsyncResult{},
+    frame_uri_for_diff_async: %AsyncResult{},
     diff_parameter_form:
       to_form(%{
         "area_nw_x" => "0",
@@ -44,30 +46,17 @@ defmodule KinWeb.VideoInfoLive.Index do
 
   # Video loading
 
+  # @impl true
+  # def handle_event("update_loading_form", params, %Socket{} = socket) do
+  #   # TODO: validate path
+  #   socket = socket |> assign(:loading_form, to_form(params))
+
+  #   {:noreply, socket}
+  # end
+
   @impl true
-  def handle_event("update_loading_form", params, %Socket{} = socket) do
-    # TODO: validate path
-    socket = socket |> assign(:loading_form, to_form(params))
-
-    {:noreply, socket}
-  end
-
-  @impl true
-  def handle_event("request_loading_video", %{"video_path" => video_path}, %Socket{} = socket) do
-    socket =
-      socket
-      |> set_async_as_loading!(:video_async)
-      |> set_async_as_loading!(:frame_uri_for_diff_params_async)
-      |> put_flash(:info, "Loading video...")
-      |> start_async(:video_was_loaded, fn ->
-        {:ok, video} = Kin.Video.load_video(video_path)
-        diff_parameter = %{nw: {0, 0}, se: video.frame_size}
-        {:ok, frame} = Kin.Video.get_example_frame_drawn_area(video, 0, diff_parameter)
-
-        {video, frame}
-      end)
-
-    {:noreply, socket}
+  def handle_event("start_loading_video", %{"video_path" => video_path}, %Socket{} = socket) do
+    {:noreply, socket |> VideoSlice.LoadVideoAsync.start(%{video_path: video_path})}
   end
 
   # Diff calculation
@@ -77,14 +66,14 @@ defmodule KinWeb.VideoInfoLive.Index do
     socket = socket |> assign(:diff_parameter_form, to_form(params))
 
     video_async = socket.assigns.video_async
-    frame_uri_for_diff_params_async = socket.assigns.frame_uri_for_diff_params_async
+    frame_uri_for_diff_async = socket.assigns.frame_uri_for_diff_async
 
     socket =
       with %AsyncResult{ok?: true, result: %Kin.Video{} = video} <- video_async,
            %AsyncResult{loading: loading} when loading == nil <-
-             frame_uri_for_diff_params_async do
+             frame_uri_for_diff_async do
         socket
-        |> set_async_as_loading!(:frame_uri_for_diff_params_async)
+        |> set_async_as_loading!(:frame_uri_for_diff_async)
         |> start_async(:frame_for_diff_is_loaded, fn ->
           diff_parameter = params |> to_form() |> diff_form_to_parameter()
           {:ok, frame} = Kin.Video.get_example_frame_drawn_area(video, 0, diff_parameter)
@@ -208,7 +197,7 @@ defmodule KinWeb.VideoInfoLive.Index do
     socket =
       socket
       |> set_async_as_ok!(:video_async, video)
-      |> set_async_as_ok!(:frame_uri_for_diff_params_async, frame_uri)
+      |> set_async_as_ok!(:frame_uri_for_diff_async, frame_uri)
       |> assign(:diff_parameter_form, diff_parameter_to_form(%{nw: {0, 0}, se: video.frame_size}))
       |> put_flash(:info, "Video was loaded")
 
@@ -261,15 +250,15 @@ defmodule KinWeb.VideoInfoLive.Index do
 
     socket =
       socket
-      |> set_async_as_ok!(:frame_uri_for_diff_params_async, frame_uri)
+      |> set_async_as_ok!(:frame_uri_for_diff_async, frame_uri)
 
     if diff_params == current_diff_parameter do
       socket
     else
       # reload frame for diff if diff parameter is changed
       socket
-      |> set_async_as_loading!(:frame_uri_for_diff_params_async)
-      |> start_async(:frame_uri_for_diff_params_async, fn ->
+      |> set_async_as_loading!(:frame_uri_for_diff_async)
+      |> start_async(:frame_uri_for_diff_async, fn ->
         {:ok, diff} =
           Kin.Video.calculate_diff(socket.assigns.video_async.result, current_diff_parameter)
 
@@ -332,6 +321,11 @@ defmodule KinWeb.VideoInfoLive.Index do
   @impl true
   def handle_info({:delayed_push_patch, path}, socket) do
     {:noreply, push_patch(socket, to: path)}
+  end
+
+  @impl true
+  def handle_info({{Rephex.LiveComponent, :call_in_root}, fun}, socket) do
+    {:noreply, fun.(socket)}
   end
 
   defp diff_parameter_to_form(%{nw: {nw_x, nw_y}, se: {se_x, se_y}} = _diff_parameter) do
