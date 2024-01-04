@@ -158,3 +158,52 @@ defmodule KinWeb.State.Slice.VideoSlice.RedrawFrameForDiffAsync do
     socket
   end
 end
+
+defmodule KinWeb.State.Slice.VideoSlice.CalcDiff do
+  alias Phoenix.LiveView.AsyncResult
+  alias Phoenix.LiveView.Socket
+
+  alias KinWeb.State.Slice.VideoSlice.Support
+
+  @type diff_parameter :: Kin.Video.diff_parameter()
+
+  @type payload :: %{diff_parameter: diff_parameter()}
+  @type message :: any()
+
+  use Rephex.AsyncAction, slice: KinWeb.State.Slice.VideoSlice
+
+  def before_async(%Socket{} = socket, _payload) do
+    {:continue, socket |> Support.update_async!(:diff_async, loading: true)}
+  end
+
+  def start_async(
+        %{video_async: %AsyncResult{} = video_async} = _state,
+        %{diff_parameter: params} = _payload,
+        _send_msg
+      ) do
+    if not video_async.ok?, do: raise("Video not loaded")
+
+    {:ok, diff} = Kin.Video.calculate_diff(video_async.result, params)
+    %{params: params, diff: diff}
+  end
+
+  def resolve(%Socket{} = socket, result) do
+    case result do
+      {:ok, %{params: _, diff: _} = val} ->
+        socket
+        |> Support.update_async!(:diff_async, ok: val)
+
+      {:exit, reason} ->
+        socket
+        |> Support.update_async!(:diff_async, failed: reason)
+    end
+  end
+
+  def receive_message(%Socket{} = socket, _content) do
+    socket
+  end
+
+  def canceled(%Socket{} = socket, _reason) do
+    socket
+  end
+end

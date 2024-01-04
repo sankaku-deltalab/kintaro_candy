@@ -19,6 +19,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
 
   @impl true
   def update(%{__rephex__: _} = assigns, socket) do
+    # TODO: strict form
     {:ok,
      socket
      |> propagate_rephex(assigns)
@@ -43,13 +44,15 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
   end
 
   @impl true
-  def handle_event("request_calculating_diff", params, socket) do
+  def handle_event("start_diff_calculation", params, socket) do
     {:noreply,
      socket
      |> assign(:diff_parameter_form, to_form(params))
      |> call_in_root(fn socket ->
        socket
-       # |> VideoSlice.calc_diff()
+       |> VideoSlice.CalcDiff.start(%{
+         diff_parameter: get_diff_parameter_from_form(to_form(params))
+       })
      end)}
   end
 
@@ -98,7 +101,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
           id="calculating_diff"
           for={@diff_parameter_form}
           phx-change="start_redraw_diff_frame"
-          phx-submit="request_calculating_diff"
+          phx-submit="start_diff_calculation"
           phx-target={@myself}
           class="border h-full"
         >
