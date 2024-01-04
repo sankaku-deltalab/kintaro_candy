@@ -23,10 +23,10 @@ defmodule KinWeb.State.Slice.VideoSlice do
             async(%{params: Video.extract_parameter(), frames: %{non_neg_integer() => Mat.t()}})
         }
 
-  alias KinWeb.State.Slice.VideoSlice.{LoadVideoAsync, RedrawFrameForDiffAsync}
+  alias KinWeb.State.Slice.VideoSlice.{LoadVideoAsync, RedrawFrameForDiffAsync, CalcDiff}
 
   use Rephex.Slice,
-    async_modules: [LoadVideoAsync, RedrawFrameForDiffAsync],
+    async_modules: [LoadVideoAsync, RedrawFrameForDiffAsync, CalcDiff],
     initial_state: @initial_state
 
   # Action
@@ -162,6 +162,7 @@ end
 defmodule KinWeb.State.Slice.VideoSlice.CalcDiff do
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.LiveView.Socket
+  alias Phoenix.LiveView
 
   alias KinWeb.State.Slice.VideoSlice.Support
 
@@ -173,7 +174,10 @@ defmodule KinWeb.State.Slice.VideoSlice.CalcDiff do
   use Rephex.AsyncAction, slice: KinWeb.State.Slice.VideoSlice
 
   def before_async(%Socket{} = socket, _payload) do
-    {:continue, socket |> Support.update_async!(:diff_async, loading: true)}
+    {:continue,
+     socket
+     |> Support.update_async!(:diff_async, loading: true)
+     |> LiveView.put_flash(:info, "Start calculating diff ...")}
   end
 
   def start_async(
@@ -192,10 +196,12 @@ defmodule KinWeb.State.Slice.VideoSlice.CalcDiff do
       {:ok, %{params: _, diff: _} = val} ->
         socket
         |> Support.update_async!(:diff_async, ok: val)
+        |> LiveView.put_flash(:info, "Diff calculation succeed")
 
       {:exit, reason} ->
         socket
         |> Support.update_async!(:diff_async, failed: reason)
+        |> LiveView.put_flash(:error, "Diff calculation failed")
     end
   end
 
