@@ -103,8 +103,8 @@ defmodule KinWeb.State.Slice.VideoSlice.LoadVideoAsync do
     socket
   end
 
-  def canceled(%Socket{} = socket, _reason) do
-    socket
+  def before_cancel(%Socket{} = socket, _reason) do
+    {:continue, socket}
   end
 end
 
@@ -154,8 +154,8 @@ defmodule KinWeb.State.Slice.VideoSlice.RedrawFrameForDiffAsync do
     socket
   end
 
-  def canceled(%Socket{} = socket, _reason) do
-    socket
+  def before_cancel(%Socket{} = socket, _reason) do
+    {:continue, socket}
   end
 end
 
@@ -209,7 +209,7 @@ defmodule KinWeb.State.Slice.VideoSlice.CalcDiff do
     socket
   end
 
-  def canceled(%Socket{} = socket, _reason) do
-    socket
+  def before_cancel(%Socket{} = socket, _reason) do
+    {:continue, socket}
   end
 end
