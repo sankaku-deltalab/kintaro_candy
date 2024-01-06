@@ -6,7 +6,7 @@ defmodule KinWeb.VideoInfoLive.Index do
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.LiveView.Socket
   alias KinWeb.State.Slice.VideoSlice
-  alias KinWeb.VideoInfoLive.{VideoLoadComponent, DiffCalcComponent}
+  alias KinWeb.VideoInfoLive.{VideoLoadComponent, DiffCalcComponent, FramesExtractionComponent}
 
   @initial_state %{
     # video loading

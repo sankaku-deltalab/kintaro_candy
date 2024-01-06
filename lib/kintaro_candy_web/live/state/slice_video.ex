@@ -23,10 +23,10 @@ defmodule KinWeb.State.Slice.VideoSlice do
             async(%{params: Video.extract_parameter(), frames: %{non_neg_integer() => Mat.t()}})
         }
 
-  alias KinWeb.State.Slice.VideoSlice.{LoadVideoAsync, RedrawFrameForDiffAsync, CalcDiff}
+  alias KinWeb.State.Slice.VideoSlice.{LoadVideoAsync, RedrawFrameForDiffAsync, CalcDiffAsync}
 
   use Rephex.Slice,
-    async_modules: [LoadVideoAsync, RedrawFrameForDiffAsync, CalcDiff],
+    async_modules: [LoadVideoAsync, RedrawFrameForDiffAsync, CalcDiffAsync],
     initial_state: @initial_state
 
   # Action
@@ -159,7 +159,7 @@ defmodule KinWeb.State.Slice.VideoSlice.RedrawFrameForDiffAsync do
   end
 end
 
-defmodule KinWeb.State.Slice.VideoSlice.CalcDiff do
+defmodule KinWeb.State.Slice.VideoSlice.CalcDiffAsync do
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.LiveView.Socket
   alias Phoenix.LiveView

@@ -51,7 +51,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
      |> assign(:diff_parameter_form, to_form(params))
      |> call_in_root(fn socket ->
        socket
-       |> VideoSlice.CalcDiff.start(%{
+       |> VideoSlice.CalcDiffAsync.start(%{
          diff_parameter: get_diff_parameter_from_form(to_form(params))
        })
      end)}
