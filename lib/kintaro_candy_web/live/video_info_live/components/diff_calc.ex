@@ -18,13 +18,14 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
   }
 
   @impl true
+  def mount(socket) do
+    {:ok, socket |> assign(@initial_state)}
+  end
+
+  @impl true
   def update(%{__rephex__: _} = assigns, socket) do
     # TODO: strict form
-    {:ok,
-     socket
-     |> propagate_rephex(assigns)
-     #  |> assign(@initial_state)
-     |> assign_new(:diff_parameter_form, fn -> @initial_state.diff_parameter_form end)}
+    {:ok, socket |> propagate_rephex(assigns)}
   end
 
   @impl true

@@ -10,11 +10,13 @@ defmodule KinWeb.VideoInfoLive.VideoLoadComponent do
   }
 
   @impl true
+  def mount(socket) do
+    {:ok, socket |> assign(@initial_state)}
+  end
+
+  @impl true
   def update(%{__rephex__: _} = assigns, socket) do
-    {:ok,
-     socket
-     |> propagate_rephex(assigns)
-     |> assign(@initial_state)}
+    {:ok, socket |> propagate_rephex(assigns)}
   end
 
   @impl true
