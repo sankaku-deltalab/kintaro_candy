@@ -1,11 +1,9 @@
 defmodule KinWeb.VideoInfoLive.Index do
   use KinWeb, :live_view
-  use Rephex.RootComponent, state: KinWeb.State
-  import Rephex.Component
+  use Rephex.LiveView, state: KinWeb.State
 
   alias Phoenix.LiveView.AsyncResult
   alias Phoenix.LiveView.Socket
-  alias KinWeb.State.Slice.VideoSlice
   alias KinWeb.VideoInfoLive.{VideoLoadComponent, DiffCalcComponent, FramesExtractionComponent}
 
   @initial_state %{

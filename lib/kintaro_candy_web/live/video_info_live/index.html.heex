@@ -2,54 +2,34 @@
   Kintaro Slicer
 </.header>
 
-<.slice_component :let={slice} root={@__rephex__} slice={VideoSlice}>
-  <.live_component module={VideoLoadComponent} id="video_loading" __rephex__={@__rephex__} />
+<.live_component module={VideoLoadComponent} id="video_loading" rpx={@rpx} />
 
-  <.live_component
-    :if={slice.video_async.ok?}
-    module={DiffCalcComponent}
-    id="calculating_diff"
-    __rephex__={@__rephex__}
-  />
+<.live_component module={DiffCalcComponent} id="calculating_diff" rpx={@rpx} />
 
-  <%= cond do %>
-    <% not @diff_async.ok? -> %>
-      <div></div>
-    <% true -> %>
-      <.simple_form
-        :let={f}
-        id="extracting_frames"
-        for={@extract_parameter_form}
-        phx-change="update_extract_form"
-        phx-submit="request_extracting_frames"
-        class="border h-full"
-      >
-        <h2>Step 3. Set Extract parameters</h2>
-        <.input field={f[:stop_frames_length]} type="number" min="0" label="stop_frames_length" />
-        <.input field={f[:diff_threshold]} type="number" min="0" label="diff_threshold" />
-        <:actions>
-          <.button>Extract frames</.button>
-        </:actions>
-      </.simple_form>
-  <% end %>
+<.live_component module={FramesExtractionComponent} id="frames_extraction" rpx={@rpx} />
 
-  <%= cond do %>
-    <% not @extracted_frames_async.ok? -> %>
-      <div></div>
-    <% true -> %>
-      <.simple_form
-        :let={f}
-        id="output_frames"
-        for={@extract_parameter_form}
-        phx-change="update_output_form"
-        phx-submit="request_output_frames"
-        class="border h-full"
-      >
-        <h2>Step 4. Save frames</h2>
-        <.input field={f[:output_directory_path]} type="text" label="Save directory" />
-        <:actions>
-          <.button>Save</.button>
-        </:actions>
-      </.simple_form>
-  <% end %>
-</.slice_component>
+<%= cond do %>
+  <% not @diff_async.ok? -> %>
+    <div></div>
+  <% true -> %>
+<% end %>
+
+<%= cond do %>
+  <% not @extracted_frames_async.ok? -> %>
+    <div></div>
+  <% true -> %>
+    <.simple_form
+      :let={f}
+      id="output_frames"
+      for={@extract_parameter_form}
+      phx-change="update_output_form"
+      phx-submit="request_output_frames"
+      class="border h-full"
+    >
+      <h2>Step 4. Save frames</h2>
+      <.input field={f[:output_directory_path]} type="text" label="Save directory" />
+      <:actions>
+        <.button>Save</.button>
+      </:actions>
+    </.simple_form>
+<% end %>

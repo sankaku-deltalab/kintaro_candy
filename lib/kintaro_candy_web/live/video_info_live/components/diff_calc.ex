@@ -1,10 +1,10 @@
 defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
   use KinWeb, :live_component
-  import Rephex.Component
+  import Rephex.LiveComponent
 
   # alias Phoenix.LiveView.Socket
   alias Phoenix.LiveView.AsyncResult
-  alias KinWeb.State.Slice.VideoSlice
+  alias KinWeb.State.{CalcDiffAsync, RedrawFrameForDiffAsync}
 
   @initial_state %{
     diff_parameter_form:
@@ -23,7 +23,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
   end
 
   @impl true
-  def update(%{__rephex__: _} = assigns, socket) do
+  def update(%{rpx: _} = assigns, socket) do
     # TODO: strict form
     {:ok, socket |> propagate_rephex(assigns)}
   end
@@ -37,7 +37,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
      socket
      |> assign(:diff_parameter_form, to_form(form_params))
      |> call_in_root(fn socket ->
-       VideoSlice.RedrawFrameForDiffAsync.start(socket, %{
+       RedrawFrameForDiffAsync.start(socket, %{
          diff_parameter: diff_params,
          frame_key: frame_key
        })
@@ -51,7 +51,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
      |> assign(:diff_parameter_form, to_form(params))
      |> call_in_root(fn socket ->
        socket
-       |> VideoSlice.CalcDiffAsync.start(%{
+       |> CalcDiffAsync.start(%{
          diff_parameter: get_diff_parameter_from_form(to_form(params))
        })
      end)}
@@ -93,74 +93,86 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
   end
 
   @impl true
+  def render(%{rpx: %{video_async: %AsyncResult{ok?: false}}} = assigns) do
+    ~H"""
+    <div></div>
+    """
+  end
+
+  @impl true
+  def render(%{rpx: %{video_async: %AsyncResult{loading: lo}}} = assigns) when lo != nil do
+    ~H"""
+    <div>Loading...</div>
+    """
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
-      <.slice_component :let={slice} root={@__rephex__} slice={VideoSlice}>
-        <.simple_form
-          :let={f}
-          id="calculating_diff"
-          for={@diff_parameter_form}
-          phx-change="start_redraw_diff_frame"
-          phx-submit="start_diff_calculation"
-          phx-target={@myself}
-          class="border h-full"
-        >
-          <h2>Step 2. Set difference parameter</h2>
-          <div>
-            <div>Video</div>
-            <img
-              :if={slice.frame_uri_for_diff_async.ok?}
-              src={slice.frame_uri_for_diff_async.result}
-              class="w-full"
-            />
-          </div>
+      <.simple_form
+        :let={f}
+        id="calculating_diff"
+        for={@diff_parameter_form}
+        phx-change="start_redraw_diff_frame"
+        phx-submit="start_diff_calculation"
+        phx-target={@myself}
+        class="border h-full"
+      >
+        <h2>Step 2. Set difference parameter</h2>
+        <div>
+          <div>Video</div>
+          <img
+            :if={@rpx.frame_uri_for_diff_async.ok?}
+            src={@rpx.frame_uri_for_diff_async.result}
+            class="w-full"
+          />
+        </div>
 
-          <.input
-            field={f[:example_frame_key]}
-            phx-throttle="100"
-            type="select"
-            label="frame key"
-            options={slice.video_async.result.example_frames |> Map.keys()}
-          />
-          <.input
-            field={f[:area_nw_x]}
-            phx-throttle="100"
-            type="range"
-            min="0"
-            max={video_size_x(slice.video_async)}
-            label="nw.x"
-          />
-          <.input
-            field={f[:area_se_x]}
-            phx-throttle="100"
-            type="range"
-            min="0"
-            max={video_size_x(slice.video_async)}
-            label="se.x"
-          />
-          <.input
-            field={f[:area_nw_y]}
-            phx-throttle="100"
-            type="range"
-            min="0"
-            max={video_size_y(slice.video_async)}
-            label="nw.y"
-          />
-          <.input
-            field={f[:area_se_y]}
-            phx-throttle="100"
-            type="range"
-            min="0"
-            max={video_size_y(slice.video_async)}
-            label="se.y"
-          />
+        <.input
+          field={f[:example_frame_key]}
+          phx-throttle="100"
+          type="select"
+          label="frame key"
+          options={@rpx.video_async.result.example_frames |> Map.keys()}
+        />
+        <.input
+          field={f[:area_nw_x]}
+          phx-throttle="100"
+          type="range"
+          min="0"
+          max={video_size_x(@rpx.video_async)}
+          label="nw.x"
+        />
+        <.input
+          field={f[:area_se_x]}
+          phx-throttle="100"
+          type="range"
+          min="0"
+          max={video_size_x(@rpx.video_async)}
+          label="se.x"
+        />
+        <.input
+          field={f[:area_nw_y]}
+          phx-throttle="100"
+          type="range"
+          min="0"
+          max={video_size_y(@rpx.video_async)}
+          label="nw.y"
+        />
+        <.input
+          field={f[:area_se_y]}
+          phx-throttle="100"
+          type="range"
+          min="0"
+          max={video_size_y(@rpx.video_async)}
+          label="se.y"
+        />
 
-          <:actions>
-            <.button>Calculate diff</.button>
-          </:actions>
-        </.simple_form>
-      </.slice_component>
+        <:actions>
+          <.button>Calculate diff</.button>
+        </:actions>
+      </.simple_form>
     </div>
     """
   end

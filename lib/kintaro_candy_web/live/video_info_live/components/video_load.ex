@@ -1,8 +1,8 @@
 defmodule KinWeb.VideoInfoLive.VideoLoadComponent do
   use KinWeb, :live_component
-  import Rephex.Component
+  import Rephex.LiveComponent
 
-  alias KinWeb.State.Slice.VideoSlice
+  alias KinWeb.State.LoadVideoAsync
   alias Phoenix.LiveView.Socket
 
   @initial_state %{
@@ -15,7 +15,7 @@ defmodule KinWeb.VideoInfoLive.VideoLoadComponent do
   end
 
   @impl true
-  def update(%{__rephex__: _} = assigns, socket) do
+  def update(%{rpx: _} = assigns, socket) do
     {:ok, socket |> propagate_rephex(assigns)}
   end
 
@@ -31,7 +31,7 @@ defmodule KinWeb.VideoInfoLive.VideoLoadComponent do
     {:noreply,
      socket
      |> call_in_root(fn socket ->
-       VideoSlice.LoadVideoAsync.start(socket, %{video_path: video_path})
+       LoadVideoAsync.start(socket, %{video_path: video_path})
      end)}
   end
 
@@ -39,22 +39,20 @@ defmodule KinWeb.VideoInfoLive.VideoLoadComponent do
   def render(assigns) do
     ~H"""
     <div>
-      <.slice_component :let={_slice} root={@__rephex__} slice={VideoSlice}>
-        <.simple_form
-          :let={f}
-          for={@loading_form}
-          phx-change="update_loading_form"
-          phx-submit="start_loading_video"
-          phx-target={@myself}
-          class="border h-full"
-        >
-          <h2>Step 1. Select video file</h2>
-          <.input field={f[:video_path]} type="text" label="Video" />
-          <:actions>
-            <.button>Load video</.button>
-          </:actions>
-        </.simple_form>
-      </.slice_component>
+      <.simple_form
+        :let={f}
+        for={@loading_form}
+        phx-change="update_loading_form"
+        phx-submit="start_loading_video"
+        phx-target={@myself}
+        class="border h-full"
+      >
+        <h2>Step 1. Select video file</h2>
+        <.input field={f[:video_path]} type="text" label="Video" />
+        <:actions>
+          <.button>Load video</.button>
+        </:actions>
+      </.simple_form>
     </div>
     """
   end
