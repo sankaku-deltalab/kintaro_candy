@@ -8,7 +8,8 @@ defmodule KinWeb.State do
     frame_uri_for_diff_async: %AsyncResult{},
     diff_async: %AsyncResult{},
     extraction_keys_async: %AsyncResult{},
-    extracted_frames_async: %AsyncResult{}
+    extracted_frames_async: %AsyncResult{},
+    store_frames_async: %AsyncResult{}
   }
 
   @type async(result) :: %AsyncResult{result: nil | result}
@@ -22,10 +23,22 @@ defmodule KinWeb.State do
             async(%{params: Video.extract_parameter(), frames: %{non_neg_integer() => Mat.t()}})
         }
 
-  alias KinWeb.State.{LoadVideoAsync, RedrawFrameForDiffAsync, CalcDiffAsync}
+  alias KinWeb.State.{
+    LoadVideoAsync,
+    RedrawFrameForDiffAsync,
+    CalcDiffAsync,
+    ExtractFramesAsync,
+    StoreFramesAsync
+  }
 
   use Rephex.State,
-    async_modules: [LoadVideoAsync, RedrawFrameForDiffAsync, CalcDiffAsync],
+    async_modules: [
+      LoadVideoAsync,
+      RedrawFrameForDiffAsync,
+      CalcDiffAsync,
+      ExtractFramesAsync,
+      StoreFramesAsync
+    ],
     initial_state: @initial_state
 
   # Action
@@ -159,9 +172,37 @@ defmodule KinWeb.State.ExtractFramesAsync do
     if not diff_async.ok?, do: exit({:shutdown, :diff_not_calculated})
     progress.(true)
 
-    keys = Kin.Video.extract_keys_when_stopped(diff_async.result, params)
+    keys = Kin.Video.extract_keys_when_stopped(diff_async.result.diff, params)
     # TODO: use callback for progress
     {:ok, frames} = Kin.Video.extract_frames_from_keys(video_async.result, keys)
     %{frames: frames, params: params}
+  end
+end
+
+defmodule KinWeb.State.StoreFramesAsync do
+  @type payload :: %{dest_directory: String.t()}
+  @type message :: {current :: non_neg_integer(), total :: non_neg_integer()}
+  @type result :: true
+
+  use Rephex.AsyncAction.Simple, async_keys: [:store_frames_async]
+
+  def start_async(
+        %{
+          video_async: video_async,
+          diff_async: diff_async,
+          extracted_frames_async: extracted_frames_async
+        } = _state,
+        %{dest_directory: dest_directory} = _payload,
+        progress
+      ) do
+    if not video_async.ok?, do: exit({:shutdown, :video_not_loaded})
+    if not diff_async.ok?, do: exit({:shutdown, :diff_not_calculated})
+    if not extracted_frames_async.ok?, do: exit({:shutdown, :frames_not_extracted})
+    progress.({0, 1})
+
+    target_frames = extracted_frames_async.result.frames
+
+    # TODO: use callback for progress
+    true = Kin.Video.write_frames(target_frames, dest_directory)
   end
 end

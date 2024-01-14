@@ -201,7 +201,7 @@ defmodule Kin.Video do
     frame
   end
 
-  @spec write_frames([%Mat{}], Path.t()) :: any()
+  @spec write_frames([%Mat{}], Path.t()) :: boolean()
   def write_frames(frames, dest_dir) do
     File.mkdir_p!(dest_dir)
 
@@ -212,5 +212,6 @@ defmodule Kin.Video do
         dest = Path.join(dest_dir, "#{i}.png")
         Evision.imwrite(dest, frame)
     end)
+    |> Enum.all?(&(&1 == true))
   end
 end

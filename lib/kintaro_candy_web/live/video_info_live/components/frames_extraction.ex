@@ -48,17 +48,26 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
 
   @impl true
   def handle_event("start_frames_extraction", form_params, socket) do
-    params = get_extract_parameter_from_form(form_params)
+    payload = %{params: get_extract_parameter_from_form_params(form_params)}
 
     {:noreply,
      socket
-     |> call_in_root(fn socket -> ExtractFramesAsync.start(socket, params) end)}
+     |> call_in_root(fn socket -> ExtractFramesAsync.start(socket, payload) end)}
 
     {:noreply, socket}
   end
 
-  defp get_extract_parameter_from_form(%Phoenix.HTML.Form{} = diff_form) do
-    p = diff_form.params
+  # defp get_extract_parameter_from_form(%Phoenix.HTML.Form{} = extract_form) do
+  #   p = extract_form.params
+
+  #   %{
+  #     diff_threshold: String.to_integer(p["diff_threshold"]),
+  #     stop_frames_length: String.to_integer(p["stop_frames_length"])
+  #   }
+  # end
+
+  defp get_extract_parameter_from_form_params(params) do
+    p = params
 
     %{
       diff_threshold: String.to_integer(p["diff_threshold"]),
@@ -76,13 +85,15 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
         for={@extraction_parameter_form}
         phx-change="update_extraction_form"
         phx-submit="start_frames_extraction"
+        phx-target={@myself}
         class="border h-full"
       >
         <h2>Step 3. Set Extract parameters</h2>
         <.input field={f[:stop_frames_length]} type="number" min="0" label="stop_frames_length" />
         <.input field={f[:diff_threshold]} type="number" min="0" label="diff_threshold" />
         <:actions>
-          <.button>Extract frames</.button>
+          <.button :if={@rpx.extracted_frames_async.loading != nil} disabled>Extracting ...</.button>
+          <.button :if={@rpx.extracted_frames_async.loading == nil}>Extract</.button>
         </:actions>
       </.simple_form>
     </div>

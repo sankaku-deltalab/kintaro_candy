@@ -108,6 +108,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
   end
 
   @impl true
+  @spec render(any()) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
     <div>
@@ -143,7 +144,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
         <.area_input field={f[:area_nw_y]} max={video_size_y(@rpx.video_async)} label="nw.x" />
         <.area_input field={f[:area_se_y]} max={video_size_y(@rpx.video_async)} label="nw.x" />
         <:actions>
-          <.button :if={@rpx.diff_async.loading != nil} disabled>Loading ...</.button>
+          <.button :if={@rpx.diff_async.loading != nil} disabled>Calculating ...</.button>
           <.button :if={@rpx.diff_async.loading == nil}>Calculate diff</.button>
         </:actions>
       </.simple_form>
