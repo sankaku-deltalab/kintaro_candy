@@ -4,7 +4,15 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
 
   # alias Phoenix.LiveView.Socket
   alias Phoenix.LiveView.AsyncResult
+  alias Rephex.CachedSelector
   alias KinWeb.State.{CalcDiffAsync, RedrawFrameForDiffAsync}
+
+  defmodule SelectShouldRender do
+    @behaviour CachedSelector.Base
+
+    def args(%{assigns: %{rpx: rpx}} = _socket), do: {rpx.video_async}
+    def resolve({video_async}), do: video_async.ok?
+  end
 
   @initial_state %{
     diff_parameter_form:
@@ -14,7 +22,8 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
         "area_nw_y" => "0",
         "area_se_x" => "1920",
         "area_se_y" => "1080"
-      })
+      }),
+    select_should_render: CachedSelector.new(SelectShouldRender)
   }
 
   @impl true
@@ -25,7 +34,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
   @impl true
   def update(%{rpx: _} = assigns, socket) do
     # TODO: strict form
-    {:ok, socket |> propagate_rephex(assigns)}
+    {:ok, socket |> propagate_rephex(assigns) |> CachedSelector.update_selectors_in_socket()}
   end
 
   @impl true
@@ -92,17 +101,9 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
     end
   end
 
-  @impl true
-  def render(%{rpx: %{video_async: %AsyncResult{ok?: false}}} = assigns) do
+  def area_input(assigns) do
     ~H"""
-    <div></div>
-    """
-  end
-
-  @impl true
-  def render(%{rpx: %{video_async: %AsyncResult{loading: lo}}} = assigns) when lo != nil do
-    ~H"""
-    <div>Loading...</div>
+    <.input field={@field} phx-throttle="100" type="range" min="0" max={@max} label={@label} />
     """
   end
 
@@ -112,6 +113,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
     <div>
       <.simple_form
         :let={f}
+        :if={@select_should_render.result}
         id="calculating_diff"
         for={@diff_parameter_form}
         phx-change="start_redraw_diff_frame"
@@ -134,43 +136,15 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
           phx-throttle="100"
           type="select"
           label="frame key"
-          options={@rpx.video_async.result.example_frames |> Map.keys()}
+          options={Map.keys(@rpx.video_async.result.example_frames)}
         />
-        <.input
-          field={f[:area_nw_x]}
-          phx-throttle="100"
-          type="range"
-          min="0"
-          max={video_size_x(@rpx.video_async)}
-          label="nw.x"
-        />
-        <.input
-          field={f[:area_se_x]}
-          phx-throttle="100"
-          type="range"
-          min="0"
-          max={video_size_x(@rpx.video_async)}
-          label="se.x"
-        />
-        <.input
-          field={f[:area_nw_y]}
-          phx-throttle="100"
-          type="range"
-          min="0"
-          max={video_size_y(@rpx.video_async)}
-          label="nw.y"
-        />
-        <.input
-          field={f[:area_se_y]}
-          phx-throttle="100"
-          type="range"
-          min="0"
-          max={video_size_y(@rpx.video_async)}
-          label="se.y"
-        />
-
+        <.area_input field={f[:area_nw_x]} max={video_size_x(@rpx.video_async)} label="nw.x" />
+        <.area_input field={f[:area_se_x]} max={video_size_x(@rpx.video_async)} label="nw.x" />
+        <.area_input field={f[:area_nw_y]} max={video_size_y(@rpx.video_async)} label="nw.x" />
+        <.area_input field={f[:area_se_y]} max={video_size_y(@rpx.video_async)} label="nw.x" />
         <:actions>
-          <.button>Calculate diff</.button>
+          <.button :if={@rpx.diff_async.loading != nil} disabled>Loading ...</.button>
+          <.button :if={@rpx.diff_async.loading == nil}>Calculate diff</.button>
         </:actions>
       </.simple_form>
     </div>

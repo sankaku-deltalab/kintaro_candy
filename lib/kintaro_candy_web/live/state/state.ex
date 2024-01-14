@@ -4,7 +4,6 @@ defmodule KinWeb.State do
   alias Kin.Video
 
   @initial_state %{
-    count: 0,
     video_async: %AsyncResult{},
     frame_uri_for_diff_async: %AsyncResult{},
     diff_async: %AsyncResult{},
@@ -52,7 +51,10 @@ defmodule KinWeb.State.LoadVideoAsync do
   use Rephex.AsyncAction
 
   def before_async(%Socket{} = socket, %{video_path: _} = _payload) do
-    {:continue, socket}
+    {:continue,
+     socket
+     |> update_state_in([:video_async], &AsyncResult.loading(&1))
+     |> update_state_in([:frame_uri_for_diff_async], &AsyncResult.loading(&1))}
   end
 
   def start_async(_state, %{video_path: video_path} = _payload, _send_msg)
@@ -103,9 +105,10 @@ defmodule KinWeb.State.RedrawFrameForDiffAsync do
   def start_async(
         %{video_async: %AsyncResult{} = video_async} = _state,
         %{diff_parameter: params, frame_key: key} = _payload,
-        _progress
+        progress
       ) do
-    if not video_async.ok?, do: raise({:shutdown, :video_not_loaded})
+    if not video_async.ok?, do: exit({:shutdown, :video_not_loaded})
+    progress.(true)
 
     {:ok, diff_frame} =
       Kin.Video.get_example_frame_drawn_area(video_async.result, key, params)
@@ -128,9 +131,10 @@ defmodule KinWeb.State.CalcDiffAsync do
   def start_async(
         %{video_async: %AsyncResult{} = video_async} = _state,
         %{diff_parameter: params} = _payload,
-        _progress
+        progress
       ) do
-    if not video_async.ok?, do: raise({:shutdown, :video_not_loaded})
+    if not video_async.ok?, do: exit({:shutdown, :video_not_loaded})
+    progress.(true)
 
     {:ok, diff} = Kin.Video.calculate_diff(video_async.result, params)
     %{params: params, diff: diff}
@@ -149,10 +153,11 @@ defmodule KinWeb.State.ExtractFramesAsync do
   def start_async(
         %{video_async: video_async, diff_async: diff_async} = _state,
         %{params: params} = _payload,
-        _progress
+        progress
       ) do
-    if not video_async.ok?, do: raise({:shutdown, :video_not_loaded})
-    if not diff_async.ok?, do: raise({:shutdown, :diff_not_calculated})
+    if not video_async.ok?, do: exit({:shutdown, :video_not_loaded})
+    if not diff_async.ok?, do: exit({:shutdown, :diff_not_calculated})
+    progress.(true)
 
     keys = Kin.Video.extract_keys_when_stopped(diff_async.result, params)
     # TODO: use callback for progress
