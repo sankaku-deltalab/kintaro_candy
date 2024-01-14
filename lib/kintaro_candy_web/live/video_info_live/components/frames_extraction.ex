@@ -75,6 +75,40 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
     }
   end
 
+  defp chart_data(%{} = diff) do
+    %{
+      chart: %{
+        type: "line",
+        animations: %{
+          enabled: false
+        },
+        toolbar: %{
+          show: true,
+          tools: %{
+            download: false,
+            selection: true,
+            zoom: true,
+            zoomin: true,
+            zoomout: true,
+            pan: true,
+            reset: true,
+            customIcons: []
+          }
+        }
+      },
+      series: [
+        %{
+          name: "diff",
+          data: diff |> Enum.sort_by(fn {k, _v} -> k end) |> Enum.map(fn {k, v} -> [k, v] end)
+        }
+      ],
+      xaxis: %{
+        type: "numeric"
+      }
+    }
+    |> Jason.encode!()
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -89,6 +123,11 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
         class="border h-full"
       >
         <h2>Step 3. Set Extract parameters</h2>
+        <div
+          id="diff-chart"
+          phx-hook="ApexChartsHook"
+          data-chart={chart_data(@rpx.diff_async.result.diff)}
+        />
         <.input field={f[:stop_frames_length]} type="number" min="0" label="stop_frames_length" />
         <.input field={f[:diff_threshold]} type="number" min="0" label="diff_threshold" />
         <:actions>
