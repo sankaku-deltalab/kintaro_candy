@@ -76,6 +76,11 @@ defmodule KinWeb.VideoInfoLive.StoreFramesComponent do
         class="border h-full"
       >
         <h2>Step 4. Save frames</h2>
+        <div class="flex overflow-x-auto">
+          <%= for mat <- @rpx.extracted_frames_async.result.frames do %>
+            <img class="flex-none" src={Kin.Video.frame_to_base64(mat)} class="w-full" />
+          <% end %>
+        </div>
         <.input field={f[:output_directory_path]} type="text" label="Save directory" />
         <:actions>
           <.button :if={@rpx.store_frames_async.loading != nil} disabled>Saving ...</.button>
