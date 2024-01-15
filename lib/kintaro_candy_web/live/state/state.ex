@@ -159,7 +159,7 @@ defmodule KinWeb.State.ExtractFramesAsync do
 
   @type payload :: %{params: extraction_parameter()}
   @type message :: {current :: non_neg_integer(), total :: non_neg_integer()}
-  @type result :: %{params: extraction_parameter(), frames: %{non_neg_integer() => Mat.t()}}
+  @type result :: %{params: extraction_parameter(), frames: [Mat.t()]}
 
   use Rephex.AsyncAction.Simple, async_keys: [:extracted_frames_async]
 
