@@ -4,14 +4,44 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
 
   # alias Phoenix.LiveView.Socket
   alias Phoenix.LiveView.AsyncResult
-  alias Rephex.Selector.CachedSelector
-  alias KinWeb.State.{CalcDiffAsync, RedrawFrameForDiffAsync}
+  alias Rephex.Selector.{CachedSelector, AsyncSelector}
+  alias KinWeb.State.CalcDiffAsync
 
   defmodule SelectShouldRender do
     @behaviour CachedSelector.Base
 
     def args(%{assigns: %{rpx: rpx}} = _socket), do: {rpx.video_async}
     def resolve({video_async}), do: video_async.ok?
+  end
+
+  defmodule SelectExampleFrameUri do
+    @behaviour CachedSelector.Base
+
+    def args(%{assigns: %{rpx: rpx, diff_parameter_form: form}} = _socket) do
+      {rpx.video_async.result, form}
+    end
+
+    def resolve({nil, _}), do: ""
+
+    def resolve({%Kin.Video{} = video, form}) do
+      frame_key = String.to_integer(form.params["example_frame_key"])
+      params = get_diff_parameter_from_form(form)
+
+      case Kin.Video.get_example_frame_drawn_area(video, frame_key, params) do
+        {:ok, diff_frame} -> Kin.Video.frame_to_base64(diff_frame)
+        # _ -> exit({:shutdown, :not_found})
+        _ -> ""
+      end
+    end
+
+    defp get_diff_parameter_from_form(%Phoenix.HTML.Form{} = diff_form) do
+      p = diff_form.params
+
+      %{
+        nw: {String.to_integer(p["area_nw_x"]), String.to_integer(p["area_nw_y"])},
+        se: {String.to_integer(p["area_se_x"]), String.to_integer(p["area_se_y"])}
+      }
+    end
   end
 
   @initial_state %{
@@ -23,7 +53,8 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
         "area_se_x" => "1920",
         "area_se_y" => "1080"
       }),
-    select_should_render: CachedSelector.new(SelectShouldRender)
+    select_should_render: CachedSelector.new(SelectShouldRender),
+    select_example_frame_uri: AsyncSelector.new(SelectExampleFrameUri, init: "")
   }
 
   @impl true
@@ -33,24 +64,19 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
 
   @impl true
   def update(%{rpx: _} = assigns, socket) do
-    # TODO: strict form
-    {:ok, socket |> propagate_rephex(assigns) |> CachedSelector.update_selectors_in_socket()}
+    {:ok,
+     socket
+     |> propagate_rephex(assigns)
+     |> CachedSelector.update_selectors_in_socket()
+     |> AsyncSelector.update_selectors_in_socket()}
   end
 
   @impl true
-  def handle_event("start_redraw_diff_frame", form_params, socket) do
-    diff_params = form_params |> to_form() |> get_diff_parameter_from_form()
-    frame_key = String.to_integer(form_params["example_frame_key"])
-
+  def handle_event("update_diff_form", form_params, socket) do
     {:noreply,
      socket
      |> assign(:diff_parameter_form, to_form(form_params))
-     |> call_in_root(fn socket ->
-       RedrawFrameForDiffAsync.start(socket, %{
-         diff_parameter: diff_params,
-         frame_key: frame_key
-       })
-     end)}
+     |> AsyncSelector.update_selectors_in_socket()}
   end
 
   @impl true
@@ -58,6 +84,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
     {:noreply,
      socket
      |> assign(:diff_parameter_form, to_form(params))
+     |> AsyncSelector.update_selectors_in_socket()
      |> call_in_root(fn socket ->
        socket
        |> CalcDiffAsync.start(%{
@@ -117,7 +144,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
         :if={@select_should_render.result}
         id="calculating_diff"
         for={@diff_parameter_form}
-        phx-change="start_redraw_diff_frame"
+        phx-change="update_diff_form"
         phx-submit="start_diff_calculation"
         phx-target={@myself}
         class="border h-full"
@@ -125,11 +152,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
         <h2>Step 2. Set difference parameter</h2>
         <div>
           <div>Video</div>
-          <img
-            :if={@rpx.frame_uri_for_diff_async.ok?}
-            src={@rpx.frame_uri_for_diff_async.result}
-            class="w-full"
-          />
+          <img src={@select_example_frame_uri.async.result} class="w-full" />
         </div>
 
         <.input
