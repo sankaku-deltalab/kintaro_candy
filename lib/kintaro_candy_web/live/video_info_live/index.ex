@@ -1,6 +1,6 @@
 defmodule KinWeb.VideoInfoLive.Index do
   use KinWeb, :live_view
-  use Rephex.LiveView, state: KinWeb.State
+  use Rephex.LiveView
 
   alias Phoenix.LiveView.Socket
 

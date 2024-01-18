@@ -23,23 +23,7 @@ defmodule KinWeb.State do
             async(%{params: Video.extract_parameter(), frames: %{non_neg_integer() => Mat.t()}})
         }
 
-  alias KinWeb.State.{
-    LoadVideoAsync,
-    RedrawFrameForDiffAsync,
-    CalcDiffAsync,
-    ExtractFramesAsync,
-    StoreFramesAsync
-  }
-
-  use Rephex.State,
-    async_modules: [
-      LoadVideoAsync,
-      RedrawFrameForDiffAsync,
-      CalcDiffAsync,
-      ExtractFramesAsync,
-      StoreFramesAsync
-    ],
-    initial_state: @initial_state
+  use Rephex.State, initial_state: @initial_state
 
   # Action
 

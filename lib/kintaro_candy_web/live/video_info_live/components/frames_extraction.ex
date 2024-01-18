@@ -1,8 +1,8 @@
 defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
   use KinWeb, :live_component
-  import Rephex.LiveComponent
+  use Rephex.LiveComponent
 
-  alias Rephex.CachedSelector
+  alias Rephex.Selector.CachedSelector
   alias KinWeb.State.ExtractFramesAsync
 
   defmodule SelectShouldRender do

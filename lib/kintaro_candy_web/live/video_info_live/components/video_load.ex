@@ -1,6 +1,6 @@
 defmodule KinWeb.VideoInfoLive.VideoLoadComponent do
   use KinWeb, :live_component
-  import Rephex.LiveComponent
+  use Rephex.LiveComponent
 
   alias KinWeb.State.LoadVideoAsync
   alias Phoenix.LiveView.Socket

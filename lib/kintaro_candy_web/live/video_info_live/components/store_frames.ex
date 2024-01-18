@@ -1,8 +1,8 @@
 defmodule KinWeb.VideoInfoLive.StoreFramesComponent do
   use KinWeb, :live_component
-  import Rephex.LiveComponent
+  use Rephex.LiveComponent
 
-  alias Rephex.CachedSelector
+  alias Rephex.Selector.CachedSelector
   alias KinWeb.State.StoreFramesAsync
 
   defmodule SelectShouldRender do

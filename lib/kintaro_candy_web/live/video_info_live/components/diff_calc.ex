@@ -1,10 +1,10 @@
 defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
   use KinWeb, :live_component
-  import Rephex.LiveComponent
+  use Rephex.LiveComponent
 
   # alias Phoenix.LiveView.Socket
   alias Phoenix.LiveView.AsyncResult
-  alias Rephex.CachedSelector
+  alias Rephex.Selector.CachedSelector
   alias KinWeb.State.{CalcDiffAsync, RedrawFrameForDiffAsync}
 
   defmodule SelectShouldRender do
