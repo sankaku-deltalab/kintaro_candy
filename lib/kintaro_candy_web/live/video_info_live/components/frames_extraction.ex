@@ -6,6 +6,36 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
   alias Rephex.Selector.CachedSelector
   alias KinWeb.State.ExtractFramesAsync
 
+  @chart_template %{
+                    chart: %{
+                      type: "line",
+                      animations: %{
+                        enabled: false
+                      },
+                      toolbar: %{
+                        show: true,
+                        tools: %{
+                          download: false,
+                          selection: true,
+                          zoom: true,
+                          zoomin: true,
+                          zoomout: true,
+                          pan: true,
+                          reset: true,
+                          customIcons: []
+                        }
+                      }
+                    },
+                    # series: [],  # no-series
+                    markers: %{
+                      size: [0, 6]
+                    },
+                    xaxis: %{
+                      type: "numeric"
+                    }
+                  }
+                  |> Jason.encode!(pretty: false)
+
   defmodule SelectShouldRender do
     @behaviour CachedSelector.Base
 
@@ -106,51 +136,26 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
     }
   end
 
-  defp chart_data(%{} = diff, keys) do
+  defp chart_template, do: @chart_template
+
+  defp chart_series(%{} = diff, keys) do
     diff_series_items =
       diff |> Enum.sort_by(fn {k, _v} -> k end) |> Enum.map(fn {k, v} -> [k, v] end)
 
     keys_series_items = keys |> Enum.sort() |> Enum.map(fn k -> [k, 0] end)
 
-    %{
-      chart: %{
+    [
+      %{
+        name: "diff",
         type: "line",
-        animations: %{
-          enabled: false
-        },
-        toolbar: %{
-          show: true,
-          tools: %{
-            download: false,
-            selection: true,
-            zoom: true,
-            zoomin: true,
-            zoomout: true,
-            pan: true,
-            reset: true,
-            customIcons: []
-          }
-        }
+        data: diff_series_items
       },
-      series: [
-        %{
-          name: "diff",
-          type: "line",
-          data: diff_series_items
-        },
-        %{
-          name: "extract_key",
-          type: "scatter",
-          data: keys_series_items
-        }
-      ],
-      markers: %{
-        size: [0, 6]
-      },
-      xaxis: %{
-        type: "numeric"
+      %{
+        name: "extract_key",
+        type: "scatter",
+        data: keys_series_items
       }
-    }
+    ]
     |> Jason.encode!(pretty: false)
   end
 
@@ -171,7 +176,10 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
         <div
           id="diff-chart"
           phx-hook="ApexChartsHook"
-          data-chart={chart_data(@rpx.diff_async.result.diff, @select_extracted_keys.async.result)}
+          data-chart_template={chart_template()}
+          data-chart_series={
+            chart_series(@rpx.diff_async.result.diff, @select_extracted_keys.async.result)
+          }
         />
         <div>Frame count: <%= length(@select_extracted_keys.async.result) %></div>
         <.input field={f[:stop_frames_length]} type="number" min="0" label="stop_frames_length" />
