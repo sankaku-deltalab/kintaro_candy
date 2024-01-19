@@ -14,8 +14,7 @@ defmodule Kin.Video do
   def load_video(filepath) do
     with %VideoCapture{} = cap <- VideoCapture.videoCapture(filepath),
          frame_size <- {cap.frame_width, cap.frame_height} do
-      # TODO: contain cap not examples
-      fetch_num = 10
+      fetch_num = 100
       frame_interval = div(floor(cap.frame_count), fetch_num)
 
       example_frames =
