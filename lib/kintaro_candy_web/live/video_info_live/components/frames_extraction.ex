@@ -1,4 +1,5 @@
 defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
+  alias Rephex.Selector.AsyncSelector
   use KinWeb, :live_component
   use Rephex.LiveComponent
 
@@ -19,11 +20,39 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
     end
   end
 
+  defmodule SelectExtractedKeys do
+    @behaviour CachedSelector.Base
+
+    alias KinWeb.VideoInfoLive.FramesExtractionComponent
+
+    def args(%{assigns: %{rpx: rpx, extraction_parameter_form: form}} = _socket) do
+      diff =
+        if rpx.diff_async.ok? do
+          rpx.diff_async.result.diff
+        else
+          nil
+        end
+
+      {diff, form.params}
+    end
+
+    def resolve({%{} = diff, form_params}) do
+      params = FramesExtractionComponent.get_extract_parameter_from_form_params(form_params)
+
+      Kin.Video.extract_keys_when_stopped(diff, params)
+    end
+
+    def resolve(_) do
+      []
+    end
+  end
+
   @type extract_parameter :: Kin.Video.extract_parameter()
 
   @initial_state %{
     extraction_parameter_form: to_form(%{"diff_threshold" => "10", "stop_frames_length" => "20"}),
-    select_should_render: CachedSelector.new(SelectShouldRender)
+    select_should_render: CachedSelector.new(SelectShouldRender),
+    select_extracted_keys: AsyncSelector.new(SelectExtractedKeys, init: [])
   }
 
   @impl true
@@ -36,14 +65,16 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
     {:ok,
      socket
      |> propagate_rephex(assigns)
-     |> CachedSelector.update_selectors_in_socket()}
+     |> CachedSelector.update_selectors_in_socket()
+     |> AsyncSelector.update_selectors_in_socket()}
   end
 
   @impl true
   def handle_event("update_extraction_form", form_params, socket) do
     {:noreply,
      socket
-     |> assign(:extraction_parameter_form, to_form(form_params))}
+     |> assign(:extraction_parameter_form, to_form(form_params))
+     |> AsyncSelector.update_selectors_in_socket()}
   end
 
   @impl true
@@ -66,13 +97,61 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
   #   }
   # end
 
-  defp get_extract_parameter_from_form_params(params) do
+  def get_extract_parameter_from_form_params(params) do
     p = params
 
     %{
       diff_threshold: String.to_integer(p["diff_threshold"]),
       stop_frames_length: String.to_integer(p["stop_frames_length"])
     }
+  end
+
+  defp chart_data(%{} = diff, keys) do
+    diff_series_items =
+      diff |> Enum.sort_by(fn {k, _v} -> k end) |> Enum.map(fn {k, v} -> [k, v] end)
+
+    keys_series_items = keys |> Enum.sort() |> Enum.map(fn k -> [k, 0] end)
+
+    %{
+      chart: %{
+        type: "line",
+        animations: %{
+          enabled: false
+        },
+        toolbar: %{
+          show: true,
+          tools: %{
+            download: false,
+            selection: true,
+            zoom: true,
+            zoomin: true,
+            zoomout: true,
+            pan: true,
+            reset: true,
+            customIcons: []
+          }
+        }
+      },
+      series: [
+        %{
+          name: "diff",
+          type: "line",
+          data: diff_series_items
+        },
+        %{
+          name: "extract_key",
+          type: "scatter",
+          data: keys_series_items
+        }
+      ],
+      markers: %{
+        size: [0, 6]
+      },
+      xaxis: %{
+        type: "numeric"
+      }
+    }
+    |> Jason.encode!(pretty: false)
   end
 
   @impl true
@@ -89,6 +168,12 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
         class="border h-full"
       >
         <h2>Step 3. Set Extract parameters</h2>
+        <div
+          id="diff-chart"
+          phx-hook="ApexChartsHook"
+          data-chart={chart_data(@rpx.diff_async.result.diff, @select_extracted_keys.async.result)}
+        />
+        <div>Frame count: <%= length(@select_extracted_keys.async.result) %></div>
         <.input field={f[:stop_frames_length]} type="number" min="0" label="stop_frames_length" />
         <.input field={f[:diff_threshold]} type="number" min="0" label="diff_threshold" />
         <:actions>
