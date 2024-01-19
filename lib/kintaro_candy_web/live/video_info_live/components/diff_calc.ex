@@ -24,7 +24,9 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
     def resolve({nil, _}), do: ""
 
     def resolve({%Kin.Video{} = video, form}) do
-      frame_key = String.to_integer(form.params["example_frame_key"])
+      frame_idx = String.to_integer(form.params["example_frame_idx"])
+      frames = video.example_frames |> Map.keys() |> Enum.sort()
+      frame_key = Enum.at(frames, frame_idx, 0)
       params = get_diff_parameter_from_form(form)
 
       case Kin.Video.get_example_frame_drawn_area(video, frame_key, params) do
@@ -47,7 +49,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
   @initial_state %{
     diff_parameter_form:
       to_form(%{
-        "example_frame_key" => "0",
+        "example_frame_idx" => "0",
         "area_nw_x" => "0",
         "area_nw_y" => "0",
         "area_se_x" => "1920",
@@ -156,11 +158,12 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
         </div>
 
         <.input
-          field={f[:example_frame_key]}
+          field={f[:example_frame_idx]}
           phx-throttle="100"
-          type="select"
-          label="frame key"
-          options={Map.keys(@rpx.video_async.result.example_frames)}
+          type="range"
+          min="0"
+          max={map_size(@rpx.video_async.result.example_frames)}
+          label="example frame"
         />
         <.area_input field={f[:area_nw_x]} max={video_size_x(@rpx.video_async)} label="nw.x" />
         <.area_input field={f[:area_se_x]} max={video_size_x(@rpx.video_async)} label="nw.x" />
