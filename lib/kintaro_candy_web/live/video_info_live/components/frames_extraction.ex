@@ -106,7 +106,12 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
     }
   end
 
-  defp chart_data(%{} = diff) do
+  defp chart_data(%{} = diff, keys) do
+    diff_series_items =
+      diff |> Enum.sort_by(fn {k, _v} -> k end) |> Enum.map(fn {k, v} -> [k, v] end)
+
+    keys_series_items = keys |> Enum.sort() |> Enum.map(fn k -> [k, 0] end)
+
     %{
       chart: %{
         type: "line",
@@ -130,14 +135,23 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
       series: [
         %{
           name: "diff",
-          data: diff |> Enum.sort_by(fn {k, _v} -> k end) |> Enum.map(fn {k, v} -> [k, v] end)
+          type: "line",
+          data: diff_series_items
+        },
+        %{
+          name: "extract_key",
+          type: "scatter",
+          data: keys_series_items
         }
       ],
+      markers: %{
+        size: [0, 6]
+      },
       xaxis: %{
         type: "numeric"
       }
     }
-    |> Jason.encode!()
+    |> Jason.encode!(pretty: false)
   end
 
   @impl true
@@ -157,7 +171,7 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
         <div
           id="diff-chart"
           phx-hook="ApexChartsHook"
-          data-chart={chart_data(@rpx.diff_async.result.diff)}
+          data-chart={chart_data(@rpx.diff_async.result.diff, @select_extracted_keys.async.result)}
         />
         <div>Frame count: <%= length(@select_extracted_keys.async.result) %></div>
         <.input field={f[:stop_frames_length]} type="number" min="0" label="stop_frames_length" />
