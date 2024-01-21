@@ -26,6 +26,7 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
                         }
                       }
                     },
+                    theme: %{mode: "dark"},
                     # series: [],  # no-series
                     markers: %{
                       size: [0, 6]
