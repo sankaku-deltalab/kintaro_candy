@@ -38,7 +38,7 @@ defmodule KinWeb.VideoInfoLive.VideoLoadComponent do
   @impl true
   def render(assigns) do
     ~H"""
-    <div>
+    <div id="video_loading">
       <.simple_form
         :let={f}
         for={@loading_form}

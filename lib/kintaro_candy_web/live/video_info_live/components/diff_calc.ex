@@ -140,7 +140,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
   @spec render(any()) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
-    <div>
+    <div id="calculating_diff">
       <.simple_form
         :let={f}
         :if={@select_should_render.result}

@@ -35,9 +35,30 @@ defmodule KinWeb.State do
   end
 end
 
-defmodule KinWeb.State.LoadVideoAsync do
-  alias Phoenix.LiveView.AsyncResult
+defmodule KinWeb.State.ScrollInto do
+  @type payload :: %{dom_id: String.t()}
 
+  use Rephex.AsyncAction, payload_type: payload()
+
+  def start_async(_state, %{dom_id: dom_id} = _payload, _) do
+    # Wait dom mount
+    :timer.sleep(100)
+    dom_id
+  end
+
+  def resolve(socket, result) do
+    case result do
+      {:ok, dom_id} ->
+        socket
+        |> Phoenix.LiveView.push_event("scroll_into_view", %{id: dom_id})
+
+      _ ->
+        socket
+    end
+  end
+end
+
+defmodule KinWeb.State.LoadVideoAsync do
   @type payload :: %{video_path: String.t()}
   @type message :: any()
   @type cancel_reason :: any()
@@ -49,6 +70,16 @@ defmodule KinWeb.State.LoadVideoAsync do
     progress.(true)
     {:ok, video} = Kin.Video.load_video(video_path)
     video
+  end
+
+  def after_async(socket, result) do
+    case result do
+      {:ok, _} ->
+        socket |> KinWeb.State.ScrollInto.start(%{dom_id: "calculating_diff"})
+
+      _ ->
+        socket
+    end
   end
 end
 
@@ -74,6 +105,16 @@ defmodule KinWeb.State.CalcDiffAsync do
     {:ok, diff} = Kin.Video.calculate_diff(video_async.result, params)
     %{params: params, diff: diff}
   end
+
+  def after_async(socket, result) do
+    case result do
+      {:ok, _} ->
+        socket |> KinWeb.State.ScrollInto.start(%{dom_id: "frames_extraction"})
+
+      _ ->
+        socket
+    end
+  end
 end
 
 defmodule KinWeb.State.ExtractFramesAsync do
@@ -98,6 +139,16 @@ defmodule KinWeb.State.ExtractFramesAsync do
     # TODO: use callback for progress
     {:ok, frames} = Kin.Video.extract_frames_from_keys(video_async.result, keys)
     %{frames: frames, params: params}
+  end
+
+  def after_async(socket, result) do
+    case result do
+      {:ok, _} ->
+        socket |> KinWeb.State.ScrollInto.start(%{dom_id: "store_frames"})
+
+      _ ->
+        socket
+    end
   end
 end
 

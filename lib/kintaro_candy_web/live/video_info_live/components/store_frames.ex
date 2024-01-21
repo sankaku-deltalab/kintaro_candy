@@ -65,7 +65,7 @@ defmodule KinWeb.VideoInfoLive.StoreFramesComponent do
   @impl true
   def render(assigns) do
     ~H"""
-    <div>
+    <div id="store_frames">
       <.simple_form
         :let={f}
         :if={@select_should_render.result}

@@ -163,7 +163,7 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
   @impl true
   def render(assigns) do
     ~H"""
-    <div>
+    <div id="frames_extraction">
       <.simple_form
         :let={f}
         :if={@select_should_render.result}
