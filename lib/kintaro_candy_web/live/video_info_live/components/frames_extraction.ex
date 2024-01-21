@@ -171,7 +171,7 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
         phx-change="update_extraction_form"
         phx-submit="start_frames_extraction"
         phx-target={@myself}
-        class="border h-full"
+        class="border h-full m-10"
       >
         <h2>Step 3. Set Extract parameters</h2>
         <div

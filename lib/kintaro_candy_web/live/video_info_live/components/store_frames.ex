@@ -73,7 +73,7 @@ defmodule KinWeb.VideoInfoLive.StoreFramesComponent do
         phx-change="update_output_form"
         phx-submit="start_output_frames"
         phx-target={@myself}
-        class="border h-full"
+        class="border h-full m-10"
       >
         <h2>Step 4. Save frames</h2>
         <div class="flex overflow-x-auto">

@@ -149,26 +149,28 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
         phx-change="update_diff_form"
         phx-submit="start_diff_calculation"
         phx-target={@myself}
-        class="border h-full"
+        class="border h-full m-10"
       >
         <h2>Step 2. Set difference parameter</h2>
-        <div>
-          <div>Video</div>
-          <img src={@select_example_frame_uri.async.result} class="w-full" />
-        </div>
+        <div class="w-full max-w-xl">
+          <div>
+            <div>Video</div>
+            <img src={@select_example_frame_uri.async.result} class="w-full" />
+          </div>
 
-        <.input
-          field={f[:example_frame_idx]}
-          phx-throttle="100"
-          type="range"
-          min="0"
-          max={map_size(@rpx.video_async.result.example_frames)}
-          label="example frame"
-        />
-        <.area_input field={f[:area_nw_x]} max={video_size_x(@rpx.video_async)} label="nw.x" />
-        <.area_input field={f[:area_se_x]} max={video_size_x(@rpx.video_async)} label="nw.x" />
-        <.area_input field={f[:area_nw_y]} max={video_size_y(@rpx.video_async)} label="nw.x" />
-        <.area_input field={f[:area_se_y]} max={video_size_y(@rpx.video_async)} label="nw.x" />
+          <.input
+            field={f[:example_frame_idx]}
+            phx-throttle="100"
+            type="range"
+            min="0"
+            max={map_size(@rpx.video_async.result.example_frames)}
+            label="example frame"
+          />
+          <.area_input field={f[:area_nw_x]} max={video_size_x(@rpx.video_async)} label="nw.x" />
+          <.area_input field={f[:area_se_x]} max={video_size_x(@rpx.video_async)} label="nw.x" />
+          <.area_input field={f[:area_nw_y]} max={video_size_y(@rpx.video_async)} label="nw.x" />
+          <.area_input field={f[:area_se_y]} max={video_size_y(@rpx.video_async)} label="nw.x" />
+        </div>
         <:actions>
           <.button :if={@rpx.diff_async.loading != nil} disabled>Calculating ...</.button>
           <.button :if={@rpx.diff_async.loading == nil}>Calculate diff</.button>
