@@ -15,11 +15,27 @@ module.exports = {
     extend: {
       colors: {
         brand: "#FD4F00",
+        zinc: {
+          // 元の色を逆の順番で設定
+          '50': '#09090b',  // 元の950
+          '100': '#18181b', // 元の900
+          '200': '#27272a', // 元の800
+          '300': '#3f3f46', // 元の700
+          '400': '#52525b', // 元の600
+          '500': '#71717a', // 元の500
+          '600': '#a1a1aa', // 元の400
+          '700': '#d4d4d8', // 元の300
+          '800': '#e4e4e7', // 元の200
+          '900': '#f4f4f5', // 元の100
+          '950': '#fafafa', // 元の50
+        },
       }
     },
   },
   plugins: [
     require("@tailwindcss/forms"),
+    require("@tailwindcss/typography"),
+    require("daisyui"),
     // Allows prefixing tailwind classes with LiveView classes to add rules
     // only when LiveView classes are applied, for example:
     //
@@ -64,5 +80,8 @@ module.exports = {
         }
       }, {values})
     })
-  ]
+  ],
+  daisyui: {
+    themes: ["light", "dark"],
+  }
 }

@@ -38,16 +38,18 @@ defmodule KinWeb.VideoInfoLive.VideoLoadComponent do
   @impl true
   def render(assigns) do
     ~H"""
-    <div>
+    <div id="video_loading">
       <.simple_form
         :let={f}
         for={@loading_form}
         phx-change="update_loading_form"
         phx-submit="start_loading_video"
         phx-target={@myself}
-        class="border h-full"
+        class="border h-full m-10"
       >
-        <h2>Step 1. Select video file</h2>
+        <article class="prose">
+          <h2>Step 1. Select video file</h2>
+        </article>
         <.input field={f[:video_path]} type="text" label="Video" />
         <:actions>
           <.button>Load video</.button>

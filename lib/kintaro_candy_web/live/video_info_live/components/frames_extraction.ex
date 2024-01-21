@@ -26,6 +26,7 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
                         }
                       }
                     },
+                    theme: %{mode: "dark"},
                     # series: [],  # no-series
                     markers: %{
                       size: [0, 6]
@@ -162,7 +163,7 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
   @impl true
   def render(assigns) do
     ~H"""
-    <div>
+    <div id="frames_extraction">
       <.simple_form
         :let={f}
         :if={@select_should_render.result}
@@ -170,9 +171,11 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
         phx-change="update_extraction_form"
         phx-submit="start_frames_extraction"
         phx-target={@myself}
-        class="border h-full"
+        class="border h-full m-10"
       >
-        <h2>Step 3. Set Extract parameters</h2>
+        <article class="prose">
+          <h2>Step 3. Set Extract parameters</h2>
+        </article>
         <div
           id="diff-chart"
           phx-hook="ApexChartsHook"
