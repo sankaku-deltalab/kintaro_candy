@@ -151,7 +151,9 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
         phx-target={@myself}
         class="border h-full m-10"
       >
-        <h2>Step 2. Set difference parameter</h2>
+        <article class="prose">
+          <h2>Step 2. Set difference parameter</h2>
+        </article>
         <div class="w-full max-w-xl">
           <div>
             <div>Video</div>

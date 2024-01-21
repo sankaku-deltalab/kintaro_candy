@@ -75,7 +75,9 @@ defmodule KinWeb.VideoInfoLive.StoreFramesComponent do
         phx-target={@myself}
         class="border h-full m-10"
       >
-        <h2>Step 4. Save frames</h2>
+        <article class="prose">
+          <h2>Step 4. Save frames</h2>
+        </article>
         <div class="flex overflow-x-auto">
           <%= for mat <- @rpx.extracted_frames_async.result.frames do %>
             <img class="flex-none" src={Kin.Video.frame_to_base64(mat)} class="w-full" />

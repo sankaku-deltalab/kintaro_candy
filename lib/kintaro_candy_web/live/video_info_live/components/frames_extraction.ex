@@ -173,7 +173,9 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
         phx-target={@myself}
         class="border h-full m-10"
       >
-        <h2>Step 3. Set Extract parameters</h2>
+        <article class="prose">
+          <h2>Step 3. Set Extract parameters</h2>
+        </article>
         <div
           id="diff-chart"
           phx-hook="ApexChartsHook"

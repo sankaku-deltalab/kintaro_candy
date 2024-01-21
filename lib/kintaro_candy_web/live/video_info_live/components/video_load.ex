@@ -47,7 +47,9 @@ defmodule KinWeb.VideoInfoLive.VideoLoadComponent do
         phx-target={@myself}
         class="border h-full m-10"
       >
-        <h2>Step 1. Select video file</h2>
+        <article class="prose">
+          <h2>Step 1. Select video file</h2>
+        </article>
         <.input field={f[:video_path]} type="text" label="Video" />
         <:actions>
           <.button>Load video</.button>
