@@ -144,7 +144,6 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
       <.simple_form
         :let={f}
         :if={@select_should_render.result}
-        id="calculating_diff"
         for={@diff_parameter_form}
         phx-change="update_diff_form"
         phx-submit="start_diff_calculation"
