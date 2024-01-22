@@ -179,6 +179,7 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
         <div
           id="diff-chart"
           phx-hook="ApexChartsHook"
+          phx-update="ignore"
           data-chart_template={chart_template()}
           data-chart_series={
             chart_series(@rpx.diff_async.result.diff, @select_extracted_keys.async.result)
