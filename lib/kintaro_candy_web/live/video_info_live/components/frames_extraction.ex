@@ -9,6 +9,7 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
   @chart_template %{
                     chart: %{
                       type: "line",
+                      height: 350,
                       animations: %{
                         enabled: false
                       },
