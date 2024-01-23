@@ -6,37 +6,6 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
   alias Rephex.Selector.CachedSelector
   alias KinWeb.State.ExtractFramesAsync
 
-  @chart_template %{
-                    chart: %{
-                      type: "line",
-                      animations: %{
-                        enabled: false
-                      },
-                      toolbar: %{
-                        show: true,
-                        tools: %{
-                          download: false,
-                          selection: true,
-                          zoom: true,
-                          zoomin: true,
-                          zoomout: true,
-                          pan: true,
-                          reset: true,
-                          customIcons: []
-                        }
-                      }
-                    },
-                    theme: %{mode: "dark"},
-                    # series: [],  # no-series
-                    markers: %{
-                      size: [0, 6]
-                    },
-                    xaxis: %{
-                      type: "numeric"
-                    }
-                  }
-                  |> Jason.encode!(pretty: false)
-
   defmodule SelectShouldRender do
     @behaviour CachedSelector.Base
 
@@ -81,7 +50,8 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
   @type extract_parameter :: Kin.Video.extract_parameter()
 
   @initial_state %{
-    extraction_parameter_form: to_form(%{"diff_threshold" => "10", "stop_frames_length" => "20"}),
+    extraction_parameter_form:
+      to_form(%{"diff_threshold" => "100", "stop_frames_length" => "20"}),
     select_should_render: CachedSelector.new(SelectShouldRender),
     select_extracted_keys: AsyncSelector.new(SelectExtractedKeys, init: [])
   }
@@ -114,6 +84,7 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
 
     {:noreply,
      socket
+     |> assign(:extraction_parameter_form, to_form(form_params))
      |> call_in_root(fn socket -> ExtractFramesAsync.start(socket, payload) end)}
 
     {:noreply, socket}
@@ -132,29 +103,42 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
     p = params
 
     %{
-      diff_threshold: String.to_integer(p["diff_threshold"]),
+      diff_threshold: String.to_integer(p["diff_threshold"]) / 100,
       stop_frames_length: String.to_integer(p["stop_frames_length"])
     }
   end
 
-  defp chart_template, do: @chart_template
+  defp chart_data(%{} = diff, keys) do
+    window = 1
 
-  defp chart_series(%{} = diff, keys) do
     diff_series_items =
-      diff |> Enum.sort_by(fn {k, _v} -> k end) |> Enum.map(fn {k, v} -> [k, v] end)
+      diff
+      |> Enum.sort_by(fn {k, _v} -> k end)
+      |> Stream.chunk_every(window, window, :discard)
+      |> Stream.map(&Enum.sort_by(&1, fn {_k, v} -> v end, :desc))
+      |> Stream.map(&hd/1)
+      |> Stream.map(fn {k, v} -> {k, Float.round(v * 100)} end)
+      |> Enum.to_list()
 
-    keys_series_items = keys |> Enum.sort() |> Enum.map(fn k -> [k, 0] end)
+    diff_series_xs = diff_series_items |> Enum.map(fn {x, _y} -> x end)
+    diff_series_ys = diff_series_items |> Enum.map(fn {_x, y} -> y end)
+
+    keys_series_items = keys |> Enum.sort() |> Enum.map(fn k -> {k, 0} end)
+    keys_series_xs = keys_series_items |> Enum.map(fn {x, _y} -> x end)
+    keys_series_ys = keys_series_items |> Enum.map(fn {_x, y} -> y end)
 
     [
       %{
         name: "diff",
-        type: "line",
-        data: diff_series_items
+        mode: "line",
+        x: diff_series_xs,
+        y: diff_series_ys
       },
       %{
         name: "extract_key",
-        type: "scatter",
-        data: keys_series_items
+        mode: "markers",
+        x: keys_series_xs,
+        y: keys_series_ys
       }
     ]
     |> Jason.encode!(pretty: false)
@@ -178,15 +162,27 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
         </article>
         <div
           id="diff-chart"
-          phx-hook="ApexChartsHook"
-          data-chart_template={chart_template()}
-          data-chart_series={
-            chart_series(@rpx.diff_async.result.diff, @select_extracted_keys.async.result)
+          phx-hook="PlotlyHook"
+          phx-update="ignore"
+          data-chart_data={
+            chart_data(@rpx.diff_async.result.diff, @select_extracted_keys.async.result)
           }
         />
         <div>Frame count: <%= length(@select_extracted_keys.async.result) %></div>
-        <.input field={f[:stop_frames_length]} type="number" min="0" label="stop_frames_length" />
-        <.input field={f[:diff_threshold]} type="number" min="0" label="diff_threshold" />
+        <.input
+          field={f[:diff_threshold]}
+          type="number"
+          min="0"
+          phx-throttle="100"
+          label="diff_threshold"
+        />
+        <.input
+          field={f[:stop_frames_length]}
+          type="number"
+          min="0"
+          phx-throttle="100"
+          label="stop_frames_length"
+        />
         <:actions>
           <.button :if={@rpx.extracted_frames_async.loading != nil} disabled>Extracting ...</.button>
           <.button :if={@rpx.extracted_frames_async.loading == nil}>Extract</.button>

@@ -22,13 +22,14 @@ import { Socket } from "phoenix";
 import { LiveSocket } from "phoenix_live_view";
 import topbar from "../vendor/topbar";
 import { ApexChartsHook } from "../hooks/apex_charts_hook";
+import { PlotlyHook } from "../hooks/plotly_hook";
 
 let csrfToken = document
   .querySelector("meta[name='csrf-token']")
   .getAttribute("content");
 let liveSocket = new LiveSocket("/live", Socket, {
   params: { _csrf_token: csrfToken },
-  hooks: { ApexChartsHook },
+  hooks: { ApexChartsHook, PlotlyHook },
 });
 
 // Show progress bar on live navigation and form submits
