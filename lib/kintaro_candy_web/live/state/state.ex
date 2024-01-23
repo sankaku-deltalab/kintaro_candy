@@ -89,10 +89,12 @@ defmodule KinWeb.State.CalcDiffAsync do
   @type diff_parameter :: Kin.Video.diff_parameter()
 
   @type payload :: %{diff_parameter: diff_parameter()}
-  @type message :: any()
+  @type message :: {current :: non_neg_integer(), total :: non_neg_integer()}
   @type result :: %{params: diff_parameter(), diff: %{non_neg_integer() => non_neg_integer()}}
 
   use Rephex.AsyncAction.Simple, async_keys: [:diff_async]
+
+  def initial_loading_state(_state, _payload), do: {0, 1}
 
   def start_async(
         %{video_async: %AsyncResult{} = video_async} = _state,
@@ -100,9 +102,9 @@ defmodule KinWeb.State.CalcDiffAsync do
         progress
       ) do
     if not video_async.ok?, do: exit({:shutdown, :video_not_loaded})
-    progress.(true)
+    progress.({0, 1})
 
-    {:ok, diff} = Kin.Video.calculate_diff(video_async.result, params)
+    {:ok, diff} = Kin.Video.calculate_diff(video_async.result, params, progress)
     %{params: params, diff: diff}
   end
 

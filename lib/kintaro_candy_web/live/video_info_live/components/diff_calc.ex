@@ -173,7 +173,9 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
           <.area_input field={f[:area_se_y]} max={video_size_y(@rpx.video_async)} label="se.y" />
         </div>
         <:actions>
-          <.button :if={@rpx.diff_async.loading != nil} disabled>Calculating ...</.button>
+          <.button :if={@rpx.diff_async.loading != nil} disabled>
+            Calculating ... <%= "(#{elem(@rpx.diff_async.loading, 0)}/#{elem(@rpx.diff_async.loading, 1)})" %>
+          </.button>
           <.button :if={@rpx.diff_async.loading == nil}>Calculate diff</.button>
         </:actions>
       </.simple_form>
