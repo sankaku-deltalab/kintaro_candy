@@ -50,7 +50,8 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
   @type extract_parameter :: Kin.Video.extract_parameter()
 
   @initial_state %{
-    extraction_parameter_form: to_form(%{"diff_threshold" => "10", "stop_frames_length" => "20"}),
+    extraction_parameter_form:
+      to_form(%{"diff_threshold" => "100", "stop_frames_length" => "20"}),
     select_should_render: CachedSelector.new(SelectShouldRender),
     select_extracted_keys: AsyncSelector.new(SelectExtractedKeys, init: [])
   }
@@ -102,13 +103,13 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
     p = params
 
     %{
-      diff_threshold: String.to_integer(p["diff_threshold"]),
+      diff_threshold: String.to_integer(p["diff_threshold"]) / 100,
       stop_frames_length: String.to_integer(p["stop_frames_length"])
     }
   end
 
   defp chart_data(%{} = diff, keys) do
-    window = 5
+    window = 1
 
     diff_series_items =
       diff

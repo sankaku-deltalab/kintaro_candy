@@ -133,7 +133,7 @@ defmodule Kin.Video do
   end
 
   @type extract_parameter :: %{
-          diff_threshold: pos_integer(),
+          diff_threshold: float() | integer(),
           stop_frames_length: pos_integer()
         }
 
