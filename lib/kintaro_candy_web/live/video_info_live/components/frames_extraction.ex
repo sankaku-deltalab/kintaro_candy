@@ -83,6 +83,7 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
 
     {:noreply,
      socket
+     |> assign(:extraction_parameter_form, to_form(form_params))
      |> call_in_root(fn socket -> ExtractFramesAsync.start(socket, payload) end)}
 
     {:noreply, socket}
