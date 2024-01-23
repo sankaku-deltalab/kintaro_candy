@@ -168,8 +168,20 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
           }
         />
         <div>Frame count: <%= length(@select_extracted_keys.async.result) %></div>
-        <.input field={f[:stop_frames_length]} type="number" min="0" label="stop_frames_length" />
-        <.input field={f[:diff_threshold]} type="number" min="0" label="diff_threshold" />
+        <.input
+          field={f[:diff_threshold]}
+          type="number"
+          min="0"
+          phx-throttle="100"
+          label="diff_threshold"
+        />
+        <.input
+          field={f[:stop_frames_length]}
+          type="number"
+          min="0"
+          phx-throttle="100"
+          label="stop_frames_length"
+        />
         <:actions>
           <.button :if={@rpx.extracted_frames_async.loading != nil} disabled>Extracting ...</.button>
           <.button :if={@rpx.extracted_frames_async.loading == nil}>Extract</.button>
