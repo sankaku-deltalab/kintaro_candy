@@ -1,11 +1,12 @@
 defmodule Kin.Video do
   alias Evision.{VideoCapture, Mat}
 
-  @enforce_keys [:filepath, :frame_size]
-  defstruct filepath: "", frame_size: {0, 0}, example_frames: %{}
+  @enforce_keys [:filepath, :frame_count, :frame_size]
+  defstruct filepath: "", frame_count: 0, frame_size: {0, 0}, example_frames: %{}
 
   @type t :: %__MODULE__{
           filepath: Path.t(),
+          frame_count: non_neg_integer(),
           frame_size: {non_neg_integer(), non_neg_integer()},
           example_frames: %{non_neg_integer() => %Mat{}}
         }
@@ -28,6 +29,7 @@ defmodule Kin.Video do
       {:ok,
        %__MODULE__{
          filepath: filepath,
+         frame_count: cap.frame_count |> round(),
          frame_size: frame_size,
          example_frames: example_frames
        }}
@@ -73,16 +75,31 @@ defmodule Kin.Video do
 
   @spec calculate_diff(
           %__MODULE__{},
-          diff_parameter()
+          diff_parameter(),
+          ({current :: non_neg_integer(), total :: non_neg_integer()} -> any())
         ) :: {:ok, diff()} | {:error, any()}
-  def calculate_diff(%__MODULE__{filepath: filepath} = video, diff_parameter) do
+  def calculate_diff(
+        %__MODULE__{filepath: filepath, frame_count: frame_count} = video,
+        diff_parameter,
+        progress_callback
+      ) do
+    progress_callback.({0, frame_count})
+
     result =
       with %VideoCapture{} = cap <- VideoCapture.videoCapture(filepath) do
         diff_init = %{}
 
         result =
           with %Mat{} = frame <- VideoCapture.read(cap) do
-            calculate_diff_recursive(diff_init, video, diff_parameter, cap, 1, frame)
+            calculate_diff_recursive(
+              diff_init,
+              video,
+              diff_parameter,
+              cap,
+              1,
+              frame,
+              progress_callback
+            )
           else
             false -> diff_init
           end
@@ -98,17 +115,28 @@ defmodule Kin.Video do
 
   defp calculate_diff_recursive(
          diff,
-         %__MODULE__{} = video,
+         %__MODULE__{frame_count: frame_count} = video,
          diff_parameter,
          %VideoCapture{} = cap,
-         current_frame_num,
-         %Mat{} = prev_frame
+         current_frame_count,
+         %Mat{} = prev_frame,
+         progress_callback
        ) do
     case VideoCapture.read(cap) do
       %Mat{} = frame ->
+        progress_callback.({current_frame_count, frame_count})
         current_diff = calc_frame_diff(diff_parameter, prev_frame, frame)
-        diff = Map.put(diff, current_frame_num, current_diff)
-        calculate_diff_recursive(diff, video, diff_parameter, cap, current_frame_num + 1, frame)
+        diff = Map.put(diff, current_frame_count, current_diff)
+
+        calculate_diff_recursive(
+          diff,
+          video,
+          diff_parameter,
+          cap,
+          current_frame_count + 1,
+          frame,
+          progress_callback
+        )
 
       false ->
         {:ok, diff}
