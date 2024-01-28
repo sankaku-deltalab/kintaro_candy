@@ -110,7 +110,7 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
     }
   end
 
-  defp chart_data(%{} = diff, keys) do
+  defp chart_data(%{} = diff, form_params, keys) do
     window = 1
 
     diff_series_items =
@@ -129,6 +129,11 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
     keys_series_xs = keys_series_items |> Enum.map(fn {x, _y} -> x end)
     keys_series_ys = keys_series_items |> Enum.map(fn {_x, y} -> y end)
 
+    %{diff_threshold: diff_threshold} = get_extract_parameter_from_form_params(form_params)
+    diff_threshold = diff_threshold * 100
+    threshold_xs = [List.first(diff_series_xs), List.last(diff_series_xs)]
+    threshold_ys = [diff_threshold, diff_threshold]
+
     [
       %{
         name: "diff",
@@ -141,6 +146,12 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
         mode: "markers",
         x: keys_series_xs,
         y: keys_series_ys
+      },
+      %{
+        name: "threshold",
+        mode: "line",
+        x: threshold_xs,
+        y: threshold_ys
       }
     ]
     |> Jason.encode!(pretty: false)
@@ -167,7 +178,11 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
             phx-hook="PlotlyHook"
             phx-update="ignore"
             data-chart_data={
-              chart_data(@rpx.diff_async.result.diff, @select_extracted_keys.async.result)
+              chart_data(
+                @rpx.diff_async.result.diff,
+                @extraction_parameter_form.params,
+                @select_extracted_keys.async.result
+              )
             }
           />
           <div>Frame count: <%= length(@select_extracted_keys.async.result) %></div>
