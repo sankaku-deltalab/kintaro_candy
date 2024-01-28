@@ -2,6 +2,8 @@ defmodule KinWeb.VideoInfoLive.VideoLoadComponent do
   use KinWeb, :live_component
   use Rephex.LiveComponent
 
+  import KinWeb.LiveView.Component
+
   alias KinWeb.State.LoadVideoAsync
   alias Phoenix.LiveView.Socket
 
@@ -39,22 +41,26 @@ defmodule KinWeb.VideoInfoLive.VideoLoadComponent do
   def render(assigns) do
     ~H"""
     <div id="video_loading">
-      <.simple_form
-        :let={f}
-        for={@loading_form}
-        phx-change="update_loading_form"
-        phx-submit="start_loading_video"
-        phx-target={@myself}
-        class="border h-full m-10"
+      <.step_element
+        title="Step 1. Select video file"
+        form_id="video_loading_form"
+        form={@loading_form}
+        body_class="w-full"
+        loading={@rpx.diff_async.loading != nil}
+        phx_change="update_loading_form"
+        phx_submit="start_loading_video"
+        phx_target={@myself}
       >
-        <article class="prose">
-          <h2>Step 1. Select video file</h2>
-        </article>
-        <.input field={f[:video_path]} type="text" label="Video" />
-        <:actions>
-          <.button>Load video</.button>
-        </:actions>
-      </.simple_form>
+        <:form_block :let={f}>
+          <.input field={f[:video_path]} type="text" label="Video" />
+        </:form_block>
+        <:loading_button_block>
+          Loading ...
+        </:loading_button_block>
+        <:submit_button_block>
+          Load video
+        </:submit_button_block>
+      </.step_element>
     </div>
     """
   end

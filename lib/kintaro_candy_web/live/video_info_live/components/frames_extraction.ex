@@ -3,6 +3,8 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
   use KinWeb, :live_component
   use Rephex.LiveComponent
 
+  import KinWeb.LiveView.Component
+
   alias Rephex.Selector.CachedSelector
   alias KinWeb.State.ExtractFramesAsync
 
@@ -148,46 +150,47 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
   def render(assigns) do
     ~H"""
     <div id="frames_extraction">
-      <.simple_form
-        :let={f}
+      <.step_element
         :if={@select_should_render.result}
-        for={@extraction_parameter_form}
-        phx-change="update_extraction_form"
-        phx-submit="start_frames_extraction"
-        phx-target={@myself}
-        class="border h-full m-10"
+        title="Step 3. Set Extract parameters"
+        form_id="frames_extraction_form"
+        form={@extraction_parameter_form}
+        body_class="w-full"
+        loading={@rpx.extracted_frames_async.loading != nil}
+        phx_change="update_extraction_form"
+        phx_submit="start_frames_extraction"
+        phx_target={@myself}
       >
-        <article class="prose">
-          <h2>Step 3. Set Extract parameters</h2>
-        </article>
-        <div
-          id="diff-chart"
-          phx-hook="PlotlyHook"
-          phx-update="ignore"
-          data-chart_data={
-            chart_data(@rpx.diff_async.result.diff, @select_extracted_keys.async.result)
-          }
-        />
-        <div>Frame count: <%= length(@select_extracted_keys.async.result) %></div>
-        <.input
-          field={f[:diff_threshold]}
-          type="number"
-          min="0"
-          phx-throttle="100"
-          label="diff_threshold"
-        />
-        <.input
-          field={f[:stop_frames_length]}
-          type="number"
-          min="0"
-          phx-throttle="100"
-          label="stop_frames_length"
-        />
-        <:actions>
-          <.button :if={@rpx.extracted_frames_async.loading != nil} disabled>Extracting ...</.button>
-          <.button :if={@rpx.extracted_frames_async.loading == nil}>Extract</.button>
-        </:actions>
-      </.simple_form>
+        <:pre_form>
+          <div
+            id="diff-chart"
+            phx-hook="PlotlyHook"
+            phx-update="ignore"
+            data-chart_data={
+              chart_data(@rpx.diff_async.result.diff, @select_extracted_keys.async.result)
+            }
+          />
+          <div>Frame count: <%= length(@select_extracted_keys.async.result) %></div>
+        </:pre_form>
+        <:form_block :let={f}>
+          <.input
+            field={f[:diff_threshold]}
+            type="number"
+            min="0"
+            phx-throttle="100"
+            label="diff_threshold"
+          />
+          <.input
+            field={f[:stop_frames_length]}
+            type="number"
+            min="0"
+            phx-throttle="100"
+            label="stop_frames_length"
+          />
+        </:form_block>
+        <:loading_button_block>Extracting ...</:loading_button_block>
+        <:submit_button_block>Extract</:submit_button_block>
+      </.step_element>
     </div>
     """
   end

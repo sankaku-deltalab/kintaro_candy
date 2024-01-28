@@ -2,6 +2,8 @@ defmodule KinWeb.VideoInfoLive.StoreFramesComponent do
   use KinWeb, :live_component
   use Rephex.LiveComponent
 
+  import KinWeb.LiveView.Component
+
   alias Rephex.Selector.CachedSelector
   alias KinWeb.State.StoreFramesAsync
 
@@ -66,29 +68,30 @@ defmodule KinWeb.VideoInfoLive.StoreFramesComponent do
   def render(assigns) do
     ~H"""
     <div id="store_frames">
-      <.simple_form
-        :let={f}
+      <.step_element
         :if={@select_should_render.result}
-        for={@output_path_form}
-        phx-change="update_output_form"
-        phx-submit="start_output_frames"
-        phx-target={@myself}
-        class="border h-full m-10"
+        title="Step 4. Save frames"
+        form_id="store_frames_form"
+        form={@output_path_form}
+        body_class="w-full"
+        loading={@rpx.store_frames_async.loading != nil}
+        phx_change="update_output_form"
+        phx_submit="start_output_frames"
+        phx_target={@myself}
       >
-        <article class="prose">
-          <h2>Step 4. Save frames</h2>
-        </article>
-        <div class="flex overflow-x-auto">
-          <%= for mat <- @rpx.extracted_frames_async.result.frames do %>
-            <img class="flex-none" src={Kin.Video.frame_to_base64(mat)} class="w-full" />
-          <% end %>
-        </div>
-        <.input field={f[:output_directory_path]} type="text" label="Save directory" />
-        <:actions>
-          <.button :if={@rpx.store_frames_async.loading != nil} disabled>Saving ...</.button>
-          <.button :if={@rpx.store_frames_async.loading == nil}>Save</.button>
-        </:actions>
-      </.simple_form>
+        <:pre_form>
+          <div class="flex overflow-x-auto">
+            <%= for mat <- @rpx.extracted_frames_async.result.frames do %>
+              <img class="flex-none" src={Kin.Video.frame_to_base64(mat)} class="w-full" />
+            <% end %>
+          </div>
+        </:pre_form>
+        <:form_block :let={f}>
+          <.input field={f[:output_directory_path]} type="text" label="Save directory" />
+        </:form_block>
+        <:loading_button_block>Saving ...</:loading_button_block>
+        <:submit_button_block>Save</:submit_button_block>
+      </.step_element>
     </div>
     """
   end
