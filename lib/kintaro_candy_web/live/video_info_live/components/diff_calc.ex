@@ -134,7 +134,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
 
   def area_input(assigns) do
     ~H"""
-    <.input field={@field} phx-throttle="100" type="range" min="0" max={@max} label={@label} />
+    <.input field={@field} phx-debounce="100" type="range" min="0" max={@max} label={@label} />
     """
   end
 
@@ -161,7 +161,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
         <:form_block :let={f}>
           <.input
             field={f[:example_frame_idx]}
-            phx-throttle="100"
+            phx-debounce="100"
             type="range"
             min="0"
             max={map_size(@rpx.video_async.result.example_frames)}
