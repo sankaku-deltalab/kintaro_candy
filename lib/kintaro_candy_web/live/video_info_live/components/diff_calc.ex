@@ -2,6 +2,8 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
   use KinWeb, :live_component
   use Rephex.LiveComponent
 
+  import KinWeb.LiveView.Component
+
   # alias Phoenix.LiveView.Socket
   alias Phoenix.LiveView.AsyncResult
   alias Rephex.Selector.{CachedSelector, AsyncSelector}
@@ -137,28 +139,26 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
   end
 
   @impl true
-  @spec render(any()) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
     <div id="calculating_diff">
-      <.simple_form
-        :let={f}
+      <.step_element
         :if={@select_should_render.result}
-        for={@diff_parameter_form}
-        phx-change="update_diff_form"
-        phx-submit="start_diff_calculation"
-        phx-target={@myself}
-        class="border h-full m-10"
+        title="Step 2. Set difference parameter"
+        form_id="calculating_diff_form"
+        form={@diff_parameter_form}
+        body_class="w-full max-w-xl"
+        loading={@rpx.diff_async.loading != nil}
+        phx_change="update_diff_form"
+        phx_submit="start_diff_calculation"
+        phx_target={@myself}
       >
-        <article class="prose">
-          <h2>Step 2. Set difference parameter</h2>
-        </article>
-        <div class="w-full max-w-xl">
+        <:pre_form>
           <div>
-            <div>Video</div>
             <img src={@select_example_frame_uri.async.result} class="w-full" />
           </div>
-
+        </:pre_form>
+        <:form_block :let={f}>
           <.input
             field={f[:example_frame_idx]}
             phx-throttle="100"
@@ -171,14 +171,14 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
           <.area_input field={f[:area_se_x]} max={video_size_x(@rpx.video_async)} label="se.x" />
           <.area_input field={f[:area_nw_y]} max={video_size_y(@rpx.video_async)} label="nw.y" />
           <.area_input field={f[:area_se_y]} max={video_size_y(@rpx.video_async)} label="se.y" />
-        </div>
-        <:actions>
-          <.button :if={@rpx.diff_async.loading != nil} disabled>
-            Calculating ... <%= "(#{elem(@rpx.diff_async.loading, 0)}/#{elem(@rpx.diff_async.loading, 1)})" %>
-          </.button>
-          <.button :if={@rpx.diff_async.loading == nil}>Calculate diff</.button>
-        </:actions>
-      </.simple_form>
+        </:form_block>
+        <:loading_button_block>
+          Calculating ... <%= "(#{elem(@rpx.diff_async.loading, 0)}/#{elem(@rpx.diff_async.loading, 1)})" %>
+        </:loading_button_block>
+        <:submit_button_block>
+          Calculate diff
+        </:submit_button_block>
+      </.step_element>
     </div>
     """
   end
