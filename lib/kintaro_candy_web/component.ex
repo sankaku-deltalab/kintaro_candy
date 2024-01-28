@@ -18,7 +18,7 @@ defmodule KinWeb.LiveView.Component do
 
   def step_element(assigns) do
     ~H"""
-    <div class="card bg-zinc-200 border m-5">
+    <div class="card bg-zinc-200 border m-5 shadow-xl">
       <div class={["card-body", @body_class]}>
         <h2 :if={@title} class="card-title"><%= @title %></h2>
         <%= render_slot(@pre_form) %>
