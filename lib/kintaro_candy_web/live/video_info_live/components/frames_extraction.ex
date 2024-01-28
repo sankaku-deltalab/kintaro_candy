@@ -192,14 +192,14 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
             field={f[:diff_threshold]}
             type="number"
             min="0"
-            phx-debounce="100"
+            phx-debounce="50"
             label="diff_threshold"
           />
           <.input
             field={f[:stop_frames_length]}
             type="number"
             min="0"
-            phx-debounce="100"
+            phx-debounce="50"
             label="stop_frames_length"
           />
         </:form_block>
