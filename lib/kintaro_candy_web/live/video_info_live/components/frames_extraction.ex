@@ -39,9 +39,12 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
     end
 
     def resolve({%{} = diff, form_params}) do
-      params = FramesExtractionComponent.get_extract_parameter_from_form_params(form_params)
-
-      Kin.Video.extract_keys_when_stopped(diff, params)
+      with {:ok, params} <-
+             FramesExtractionComponent.get_extract_parameter_from_form_params(form_params) do
+        Kin.Video.extract_keys_when_stopped(diff, params)
+      else
+        _ -> []
+      end
     end
 
     def resolve(_) do
@@ -82,14 +85,18 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
 
   @impl true
   def handle_event("start_frames_extraction", form_params, socket) do
-    payload = %{params: get_extract_parameter_from_form_params(form_params)}
+    with {:ok, params} <- get_extract_parameter_from_form_params(form_params) do
+      payload = %{params: params}
 
-    {:noreply,
-     socket
-     |> assign(:extraction_parameter_form, to_form(form_params))
-     |> call_in_root(fn socket -> ExtractFramesAsync.start(socket, payload) end)}
+      {:noreply,
+       socket
+       |> assign(:extraction_parameter_form, to_form(form_params))
+       |> call_in_root(fn socket -> ExtractFramesAsync.start(socket, payload) end)}
 
-    {:noreply, socket}
+      {:noreply, socket}
+    else
+      _ -> {:noreply, socket}
+    end
   end
 
   # defp get_extract_parameter_from_form(%Phoenix.HTML.Form{} = extract_form) do
@@ -104,10 +111,12 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
   def get_extract_parameter_from_form_params(params) do
     p = params
 
-    %{
-      diff_threshold: String.to_integer(p["diff_threshold"]) / 100,
-      stop_frames_length: String.to_integer(p["stop_frames_length"])
-    }
+    with {diff_threshold, _} <- Integer.parse(p["diff_threshold"]),
+         {stop_frames_length, _} <- Integer.parse(p["stop_frames_length"]) do
+      {:ok, %{diff_threshold: diff_threshold / 100, stop_frames_length: stop_frames_length}}
+    else
+      _ -> {:error, "invalid parameter"}
+    end
   end
 
   defp chart_data(%{} = diff, form_params, keys) do
@@ -129,7 +138,12 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
     keys_series_xs = keys_series_items |> Enum.map(fn {x, _y} -> x end)
     keys_series_ys = keys_series_items |> Enum.map(fn {_x, y} -> y end)
 
-    %{diff_threshold: diff_threshold} = get_extract_parameter_from_form_params(form_params)
+    diff_threshold =
+      case get_extract_parameter_from_form_params(form_params) do
+        {:ok, %{diff_threshold: diff_threshold}} -> diff_threshold
+        _ -> 0
+      end
+
     diff_threshold = diff_threshold * 100
     threshold_xs = [List.first(diff_series_xs), List.last(diff_series_xs)]
     threshold_ys = [diff_threshold, diff_threshold]
