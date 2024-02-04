@@ -46,7 +46,7 @@ defmodule KinWeb.VideoInfoLive.VideoLoadComponent do
         form_id="video_loading_form"
         form={@loading_form}
         body_class="w-full"
-        loading={@rpx.diff_async.loading != nil}
+        loading={@rpx.video_async.loading != nil}
         phx_change="update_loading_form"
         phx_submit="start_loading_video"
         phx_target={@myself}
