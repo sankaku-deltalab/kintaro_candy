@@ -87,12 +87,12 @@ defmodule Kin.Video do
 
     result =
       with %VideoCapture{} = cap <- VideoCapture.videoCapture(filepath) do
-        diff_init = %{}
+        diff_list_init = []
 
-        result =
+        {:ok, diff_list} =
           with %Mat{} = frame <- VideoCapture.read(cap) do
             calculate_diff_recursive(
-              diff_init,
+              diff_list_init,
               video,
               diff_parameter,
               cap,
@@ -101,11 +101,12 @@ defmodule Kin.Video do
               progress_callback
             )
           else
-            false -> diff_init
+            false -> diff_list_init
           end
 
         VideoCapture.release(cap)
-        result
+
+        {:ok, diff_list |> Map.new()}
       else
         {:error, message} -> {:error, message}
       end
@@ -126,7 +127,7 @@ defmodule Kin.Video do
       %Mat{} = frame ->
         progress_callback.({current_frame_count, frame_count})
         current_diff = calc_frame_diff(diff_parameter, prev_frame, frame)
-        diff = Map.put(diff, current_frame_count, current_diff)
+        diff = [{current_frame_count, current_diff} | diff]
 
         calculate_diff_recursive(
           diff,
