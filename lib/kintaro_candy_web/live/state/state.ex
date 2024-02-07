@@ -94,6 +94,8 @@ defmodule KinWeb.State.CalcDiffAsync do
 
   use Rephex.AsyncAction.Simple, async_keys: [:diff_async]
 
+  def option(), do: %{throttle: 50}
+
   def initial_loading_state(_state, _payload), do: {0, 1}
 
   def start_async(
