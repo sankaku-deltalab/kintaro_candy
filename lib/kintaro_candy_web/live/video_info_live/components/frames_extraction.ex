@@ -71,8 +71,7 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
     {:ok,
      socket
      |> propagate_rephex(assigns)
-     |> CachedSelector.update_selectors_in_socket()
-     |> AsyncSelector.update_selectors_in_socket()}
+     |> Rephex.Selector.update_in_socket()}
   end
 
   @impl true
@@ -80,7 +79,7 @@ defmodule KinWeb.VideoInfoLive.FramesExtractionComponent do
     {:noreply,
      socket
      |> assign(:extraction_parameter_form, to_form(form_params))
-     |> AsyncSelector.update_selectors_in_socket()}
+     |> Rephex.Selector.update_in_socket()}
   end
 
   @impl true

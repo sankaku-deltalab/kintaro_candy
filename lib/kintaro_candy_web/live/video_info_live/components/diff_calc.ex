@@ -71,8 +71,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
     {:ok,
      socket
      |> propagate_rephex(assigns)
-     |> CachedSelector.update_selectors_in_socket()
-     |> AsyncSelector.update_selectors_in_socket()}
+     |> Rephex.Selector.update_in_socket()}
   end
 
   @impl true
@@ -80,7 +79,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
     {:noreply,
      socket
      |> assign(:diff_parameter_form, to_form(form_params))
-     |> AsyncSelector.update_selectors_in_socket()}
+     |> Rephex.Selector.update_in_socket()}
   end
 
   @impl true
@@ -88,7 +87,7 @@ defmodule KinWeb.VideoInfoLive.DiffCalcComponent do
     {:noreply,
      socket
      |> assign(:diff_parameter_form, to_form(params))
-     |> AsyncSelector.update_selectors_in_socket()
+     |> Rephex.Selector.update_in_socket()
      |> call_in_root(fn socket ->
        socket
        |> CalcDiffAsync.start(%{

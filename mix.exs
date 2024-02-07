@@ -49,7 +49,7 @@ defmodule Kin.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:plug_cowboy, "~> 2.5"},
       {:evision, "~> 0.1.34"},
-      {:rephex, github: "sankaku-deltalab/rephex"}
+      {:rephex, github: "sankaku-deltalab/rephex", branch: "develop"}
     ]
   end
 

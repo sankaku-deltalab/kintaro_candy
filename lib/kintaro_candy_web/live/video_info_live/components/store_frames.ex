@@ -41,7 +41,7 @@ defmodule KinWeb.VideoInfoLive.StoreFramesComponent do
     {:ok,
      socket
      |> propagate_rephex(assigns)
-     |> CachedSelector.update_selectors_in_socket()}
+     |> Rephex.Selector.update_in_socket()}
   end
 
   @impl true
