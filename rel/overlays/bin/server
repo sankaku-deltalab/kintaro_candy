@@ -1,0 +1,7 @@
+#!/bin/sh
+cd -P -- "$(dirname -- "$0")"
+export PHX_SERVER=true
+export SECRET_KEY_BASE=SA232zaUTInu950hd9rcgjI+qXGRmEkmJDMOZ912eJBvVwx1GLtIg6CZ6j0Awwy4
+export PHX_HOST="localhost"
+export PORT=4000
+exec ./kintaro_candy start
